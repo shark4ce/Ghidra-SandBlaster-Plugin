@@ -9,7 +9,6 @@ import sandblasterplugin.enums.UserPreferenceKey;
 
 public class ConfigurationModel {
 	
-	
 	private String python2BinPathString;
 	private String python3BinPathString;
 	
