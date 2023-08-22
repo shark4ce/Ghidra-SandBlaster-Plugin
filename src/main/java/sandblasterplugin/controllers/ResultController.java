@@ -12,84 +12,59 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeModel;
 
-import sandblasterplugin.Utilities;
+import sandblasterplugin.enums.PropertyChangeEventNames;
 import sandblasterplugin.models.ResultModel;
+import sandblasterplugin.utils.Utilities;
 import sandblasterplugin.views.ResultView;
 
 public class ResultController implements PropertyChangeListener{
-    private ResultModel model;
-    private ResultView view;
+    private ResultModel resultModel;
+    private ResultView resultView;
 
-    public ResultController(ResultModel model, ResultView view) {
-        this.model = model;
-        this.view = view;
+    public ResultController(ResultModel resultModel, ResultView resultView) {
+        this.resultModel = resultModel;
+        this.resultView = resultView;
         initListeners();
     }
 
     private void initListeners() {
-    	model.addPropertyChangeListener(this);
+    	resultModel.addPropertyChangeListener(this);
     	
-    	view.getDirectoryTree().setCellRenderer(new DefaultTreeCellRenderer());
-    	view.getDirectoryTree().addTreeSelectionListener(this::previewFilesAction);
+    	resultView.getDirectoryTree().setCellRenderer(new DirectoryTreeCellRenderer());
+    	resultView.getDirectoryTree().addTreeSelectionListener(this::previewFilesAction);
     	
-    	
-    	view.getOpenDirButton().addActionListener(this::openButtonAction);
-    	view.getRefreshButton().addActionListener(this::refreshButtonAction);
-    }
-    
-    
-    private void previewFilesAction(TreeSelectionEvent e) {
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode) view.getDirectoryTree().getLastSelectedPathComponent();
-
-        if (node == null || node.isRoot() || !node.isLeaf())
-            return;
-        
-        File nodeFile = (File) node.getUserObject();
-        if (!nodeFile.isDirectory()) {
-        	String content = Utilities.readTextFile(nodeFile);
-            if (content == null) {
-            	model.setFileContentString("");
-            	view.displayWarning("Warning: The selected file is not a text file.");
-                return;
-            }
-        	model.setFileContentString(content);
-        }
+    	resultView.getOpenDirButton().addActionListener(this::openButtonAction);
+    	resultView.getRefreshButton().addActionListener(this::refreshButtonAction);
     }
     
     private void openButtonAction(ActionEvent e) {
-    	JFileChooser fileChooser;
-		fileChooser = new JFileChooser();
+    	JFileChooser fileChooser = new JFileChooser();
 		fileChooser.setDialogTitle("Choose Directory");
 		fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-		fileChooser.setAcceptAllFileFilterUsed(false);  // Disable the "All files" option.
-		
-//		
-//	    TreeModel treeModel = view.getDirectoryTree().getModel();
-//	    if (treeModel != null) {
-//	        DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode) treeModel.getRoot();
-//	        if (rootNode != null) {
-//		        File currentDirectoryFile = (File)rootNode.getUserObject();
-//				if (currentDirectoryFile != null) {
-//					fileChooser.setCurrentDirectory(currentDirectoryFile);
-//				}
-//	        }
-//			
-//	    }
+		fileChooser.setAcceptAllFileFilterUsed(false);
+
+        DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode) resultView.getDirectoryTree().getModel().getRoot();
+        if (rootNode != null && rootNode.getUserObject() instanceof File) {
+	        File currentDirectoryFile = (File)rootNode.getUserObject();
+			if (currentDirectoryFile != null && currentDirectoryFile.exists()) {
+				fileChooser.setCurrentDirectory(currentDirectoryFile);
+			}
+        }
 	    
         int returnValue = fileChooser.showOpenDialog(null);
         if (returnValue == JFileChooser.APPROVE_OPTION) {
             File selectedFile = fileChooser.getSelectedFile();
-            model.loadDirectory(selectedFile);        }
+            resultModel.loadTreeData(selectedFile);
+        }
     }
     
     private void refreshButtonAction(ActionEvent e) {
-        DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode) view.getDirectoryTree().getModel().getRoot();
-		if (rootNode != null) {
+        DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode) resultView.getDirectoryTree().getModel().getRoot();
+		if (rootNode != null && rootNode.getUserObject() instanceof File) {
 	        File currentDirectoryFile = (File)rootNode.getUserObject();
 			if (currentDirectoryFile != null) {
-				model.loadDirectory(currentDirectoryFile);
+	            resultModel.loadTreeData(currentDirectoryFile);
 			}
 		}
     }
@@ -100,7 +75,8 @@ public class ResultController implements PropertyChangeListener{
                                                       boolean leaf, int row, boolean hasFocus) {
             super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
             DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
-            if (node.getUserObject() instanceof File) {
+            
+            if (node.getUserObject() instanceof File && ((File)node.getUserObject()).exists()) {
                 File file = (File) node.getUserObject();
                 if (node.isRoot()) {
                 	setText(file.getAbsolutePath());
@@ -117,16 +93,40 @@ public class ResultController implements PropertyChangeListener{
             return this;
         }
     }
+    
+	private void previewFilesAction(TreeSelectionEvent e) {
+        DefaultMutableTreeNode node = (DefaultMutableTreeNode) resultView.getDirectoryTree().getLastSelectedPathComponent();
 
+        if (node == null || node.isRoot() || !node.isLeaf())
+            return;
+        
+        File nodeFile = (File) node.getUserObject();
+	    if (!nodeFile.exists()) {
+        	resultView.displayWarning("Warning: The selected file/directory was deleted. Please, refresh.");
+        	return;
+	    }
+	    
+	    if (!nodeFile.isDirectory()) {
+	    	String content = Utilities.readTextFile(nodeFile);
+	        if (content == null) {
+	        	resultModel.setFileContentString("");
+	        	resultView.displayWarning("Warning: The selected file is not a text file.");
+	            return;
+	        }
+	    	resultModel.setFileContentString(content);
+	    }
+    }
+	
 	@Override
 	public void propertyChange(PropertyChangeEvent evt) {
-        if ("treeModel".equals(evt.getPropertyName()) && evt.getNewValue() != null) {
-//        	JTree directoryTree = view.getDirectoryTree();
-        	view.getDirectoryTree().setModel((DefaultTreeModel) evt.getNewValue());
-
-//            directoryTree.setVisible(true);
-        } else if ("fileContentString".equals(evt.getPropertyName()) && evt.getNewValue() != null) {
-        	view.getFileContentArea().setText((String)evt.getNewValue());
+        if (PropertyChangeEventNames.TREE_ROOT_NODE_UPDATED.getEventName().equals(evt.getPropertyName()) && evt.getNewValue() != null) {
+        	JTree directoryTree = resultView.getDirectoryTree();
+        	((DefaultTreeModel) directoryTree.getModel()).setRoot((DefaultMutableTreeNode) evt.getNewValue());
+            if(!directoryTree.isRootVisible()) {
+            	directoryTree.setRootVisible(true);
+            }
+        } else if (PropertyChangeEventNames.FILE_CONTENT_UPDATED.getEventName().equals(evt.getPropertyName()) && evt.getNewValue() != null) {
+        	resultView.getFileContentArea().setText((String)evt.getNewValue());
         }
 	}
 }

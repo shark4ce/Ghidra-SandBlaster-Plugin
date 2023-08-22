@@ -2,7 +2,6 @@ package sandblasterplugin.controllers;
 
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -10,17 +9,18 @@ import java.io.InputStreamReader;
 
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
-import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import ghidra.framework.model.Project;
-import ghidra.program.model.listing.Program;
+import ghidra.util.Msg;
 import sandblasterplugin.LoggerUtil;
 import sandblasterplugin.SandBlasterBackgroundTask;
-import sandblasterplugin.Utilities;
+import sandblasterplugin.SandBlasterPlugin;
+import sandblasterplugin.enums.PropertyChangeEventNames;
 import sandblasterplugin.models.ConfigurationModel;
+import sandblasterplugin.models.ResultModel;
+import sandblasterplugin.utils.Utilities;
 import sandblasterplugin.views.ConfigurationView;
 
 
@@ -30,11 +30,22 @@ public class ConfigurationController {
 	private ConfigurationView configurationView;
 	private LoggerUtil logUtil;
 	private SandBlasterBackgroundTask sandBlasterBackgroundTask;
+	private SandBlasterPlugin sandBlasterPlugin;
+	private ResultModel resultModel;
+
 	
 	
-    public ConfigurationController(ConfigurationModel configurationModel, ConfigurationView configurationView) {
+    public ConfigurationController(
+    		ConfigurationModel configurationModel, 
+    		ConfigurationView configurationView, 
+    		SandBlasterPlugin sandBlasterPlugin, 
+    		ResultModel resultModel
+    		) 
+    {
     	this.configurationModel = configurationModel;
     	this.configurationView = configurationView;
+    	this.sandBlasterPlugin = sandBlasterPlugin;
+    	this.resultModel = resultModel;
     	this.logUtil = new LoggerUtil(configurationView.getLogTextArea());
 
     	initListeners();
@@ -52,10 +63,16 @@ public class ConfigurationController {
 		return logUtil;
 	}
 	
+	public SandBlasterPlugin getSandBlasterPlugin() {
+		return this.sandBlasterPlugin;
+	}
+	
+	
 	// button actions
     private void initListeners() {
     	// add property change listener to model
     	configurationModel.addPropertyChangeListener(this::ConfModelPropertyChangeListner);
+    	configurationModel.fetchUserPreferences();
 		
     	configurationView.getPython2BinChooseButton().addActionListener(this::choosePython2ButtonAction);
     	configurationView.getPython3BinChooseButton().addActionListener(this::choosePython3ButtonAction);
@@ -64,32 +81,20 @@ public class ConfigurationController {
     	
     	configurationView.getKernelExtFileChooseButton().addActionListener(
     			e -> chooseFileButtonAction(
-    					e, 
-    					configurationModel.getKernelExtFilePathString(), 
-    					configurationModel::setKernelExtFilePathString,
-    					false
-    					)
+    					e, configurationModel.getKernelExtFilePathString(), configurationModel::setKernelExtFilePathString, false)
     			);
     	configurationView.getSandboxdFileChooseButton().addActionListener(
     			e -> chooseFileButtonAction(
-    					e, 
-    					configurationModel.getSandboxdFilePathString(), 
-    					configurationModel::setSandboxdFilePathString,
-    					false
-    					)
+    					e, configurationModel.getSandboxdFilePathString(), configurationModel::setSandboxdFilePathString, false)
     			);
     	
-		String projectDirPath = getProjectDir();
+		String projectDirPath = this.sandBlasterPlugin.getProjectDirectoryPath();
 		if (projectDirPath != null) {
     		configurationModel.setOutDirPathString(projectDirPath);
 		} 
     	configurationView.getOutDirPathChooseButton().addActionListener(
     			e -> chooseFileButtonAction(
-    					e, 
-    					configurationModel.getOutDirPathString(), 
-    					configurationModel::setOutDirPathString,
-    					true
-    					)
+    					e, configurationModel.getOutDirPathString(), configurationModel::setOutDirPathString, true)
     			);
     	
     	configurationView.getStartButton().addActionListener(this::startButtonAction);
@@ -102,66 +107,7 @@ public class ConfigurationController {
     	configurationView.getiOSVersionTextField().getDocument().addDocumentListener(new iOSVersionTextFieldDocumentListener());
     }
     
-    private void ConfModelPropertyChangeListner(PropertyChangeEvent evt) {
-        if ("python2BinPathString".equals(evt.getPropertyName())) {
-        	configurationView.getPython2TextField().setText((String) evt.getNewValue());
-        } else if ("python3BinPathString".equals(evt.getPropertyName())) {
-        	configurationView.getPython3TextField().setText((String) evt.getNewValue());
-        } else if ("kernelExtFilePathString".equals(evt.getPropertyName())) {
-        	configurationView.getKernelExtFilePathTextField().setText((String) evt.getNewValue());
-        } else if ("sandboxdFilePathString".equals(evt.getPropertyName())) {
-        	configurationView.getSandboxdFilePathTextField().setText((String) evt.getNewValue());
-        } else if ("kernelCacheFilePathString".equals(evt.getPropertyName())) {
-        	configurationView.getKernelCacheFilePathTextField().setText((String) evt.getNewValue());
-        } else if ("outDirPathString".equals(evt.getPropertyName())) {
-        	configurationView.getOutDirPathTextField().setText((String) evt.getNewValue());
-        } else if ("iOSVersionString".equals(evt.getPropertyName())) {
-        	String iOSVersionString = (String) evt.getNewValue();
-        	// clear
-        	if (iOSVersionString.equals("")) {
-            	configurationView.getKernelExtFilePathTextField().setEnabled(false);
-            	configurationView.getKernelExtFileChooseButton().setEnabled(false);
-            	
-            	configurationView.getSandboxdFilePathTextField().setEnabled(false);
-            	configurationView.getSandboxdFileChooseButton().setEnabled(false);
-            	
-            	configurationView.getKernelCacheFilePathTextField().setEnabled(false);
-            	configurationView.getKernelCacheFileChooseButton().setEnabled(false);
-        	} else {
-                Integer iOSMajorVersionInteger = Integer.parseInt(Utilities.getMajoriOSVersion(iOSVersionString));
-                if (iOSMajorVersionInteger >= 5 && iOSMajorVersionInteger <= 8) {
-                	configurationView.getKernelExtFilePathTextField().setEnabled(true);
-                	configurationView.getKernelExtFileChooseButton().setEnabled(true);
-                	
-                	configurationView.getSandboxdFilePathTextField().setEnabled(true);
-                	configurationView.getSandboxdFileChooseButton().setEnabled(true);
-                	
-                	configurationView.getKernelCacheFilePathTextField().setEnabled(false);
-                	configurationView.getKernelCacheFileChooseButton().setEnabled(false);
-
-                } else if(iOSMajorVersionInteger >= 12) {
-                	configurationView.getKernelExtFilePathTextField().setEnabled(false);
-                	configurationView.getKernelExtFileChooseButton().setEnabled(false);
-                	
-                	configurationView.getSandboxdFilePathTextField().setEnabled(false);
-                	configurationView.getSandboxdFileChooseButton().setEnabled(false);
-                	
-                	configurationView.getKernelCacheFilePathTextField().setEnabled(true);
-                	configurationView.getKernelCacheFileChooseButton().setEnabled(true);
-                } else {
-                	configurationView.getKernelExtFilePathTextField().setEnabled(true);
-                	configurationView.getKernelExtFileChooseButton().setEnabled(true);
-                	
-                	configurationView.getSandboxdFilePathTextField().setEnabled(false);
-                	configurationView.getSandboxdFileChooseButton().setEnabled(false);
-                	
-                	configurationView.getKernelCacheFilePathTextField().setEnabled(false);
-                	configurationView.getKernelCacheFileChooseButton().setEnabled(false);
-                }
-        	}
-        }
-        
-        // Check if both paths are set to enable the Start button
+    private void tryToEnableStartButton() {
         if (
         		!configurationModel.getPython2BinPathString().equals("") &&
         		!configurationModel.getPython3BinPathString().equals("") &&
@@ -187,6 +133,72 @@ public class ConfigurationController {
         	configurationView.getStartButton().setEnabled(false);
         	configurationView.getCancelButton().setEnabled(false);
         }
+    }
+    
+    private void enableRequiredFields(String iOSVersionString) {
+    	if (iOSVersionString.equals("")) {
+        	configurationView.getKernelExtFilePathTextField().setEnabled(false);
+        	configurationView.getKernelExtFileChooseButton().setEnabled(false);
+        	
+        	configurationView.getSandboxdFilePathTextField().setEnabled(false);
+        	configurationView.getSandboxdFileChooseButton().setEnabled(false);
+        	
+        	configurationView.getKernelCacheFilePathTextField().setEnabled(false);
+        	configurationView.getKernelCacheFileChooseButton().setEnabled(false);
+    	} else {
+            Integer iOSMajorVersionInteger = Integer.parseInt(Utilities.getMajoriOSVersion(iOSVersionString));
+            if (iOSMajorVersionInteger >= 5 && iOSMajorVersionInteger <= 8) {
+            	configurationView.getKernelExtFilePathTextField().setEnabled(true);
+            	configurationView.getKernelExtFileChooseButton().setEnabled(true);
+            	
+            	configurationView.getSandboxdFilePathTextField().setEnabled(true);
+            	configurationView.getSandboxdFileChooseButton().setEnabled(true);
+            	
+            	configurationView.getKernelCacheFilePathTextField().setEnabled(false);
+            	configurationView.getKernelCacheFileChooseButton().setEnabled(false);
+
+            } else if(iOSMajorVersionInteger >= 12) {
+            	configurationView.getKernelExtFilePathTextField().setEnabled(false);
+            	configurationView.getKernelExtFileChooseButton().setEnabled(false);
+            	
+            	configurationView.getSandboxdFilePathTextField().setEnabled(false);
+            	configurationView.getSandboxdFileChooseButton().setEnabled(false);
+            	
+            	configurationView.getKernelCacheFilePathTextField().setEnabled(true);
+            	configurationView.getKernelCacheFileChooseButton().setEnabled(true);
+            } else {
+            	configurationView.getKernelExtFilePathTextField().setEnabled(true);
+            	configurationView.getKernelExtFileChooseButton().setEnabled(true);
+            	
+            	configurationView.getSandboxdFilePathTextField().setEnabled(false);
+            	configurationView.getSandboxdFileChooseButton().setEnabled(false);
+            	
+            	configurationView.getKernelCacheFilePathTextField().setEnabled(false);
+            	configurationView.getKernelCacheFileChooseButton().setEnabled(false);
+            }
+    	}
+    }
+    
+    private void ConfModelPropertyChangeListner(PropertyChangeEvent evt) {
+        if (PropertyChangeEventNames.PYTHON2_BIN_PATH_UPDATED.getEventName().equals(evt.getPropertyName())) {
+        	configurationView.getPython2TextField().setText((String) evt.getNewValue());
+        } else if (PropertyChangeEventNames.PYTHON3_BIN_PATH_UPDATED.getEventName().equals(evt.getPropertyName())) {
+        	Msg.info(null, "yes ");
+        	configurationView.getPython3TextField().setText((String) evt.getNewValue());
+        } else if (PropertyChangeEventNames.KERNEL_EXT_FILE_PATH_UPDATED.getEventName().equals(evt.getPropertyName())) {
+        	configurationView.getKernelExtFilePathTextField().setText((String) evt.getNewValue());
+        } else if (PropertyChangeEventNames.SANDBOXD_FILE_PATH_UPDATED.getEventName().equals(evt.getPropertyName())) {
+        	configurationView.getSandboxdFilePathTextField().setText((String) evt.getNewValue());
+        } else if (PropertyChangeEventNames.KERNEL_CACHE_FILE_PATH_UPDATED.getEventName().equals(evt.getPropertyName())) {
+        	configurationView.getKernelCacheFilePathTextField().setText((String) evt.getNewValue());
+        } else if (PropertyChangeEventNames.OUT_DIR_PATH_UPDATED.getEventName().equals(evt.getPropertyName())) {
+        	configurationView.getOutDirPathTextField().setText((String) evt.getNewValue());
+        } else if (PropertyChangeEventNames.IOS_VERSION_VALUE_UPDATED.getEventName().equals(evt.getPropertyName())) {
+        	enableRequiredFields((String) evt.getNewValue());
+        }
+        
+        // Check if both paths are set to enable the Start button
+        tryToEnableStartButton();
     }
     
     // buttons listeners
@@ -334,12 +346,13 @@ public class ConfigurationController {
     
     private void chooseFileButtonAction(ActionEvent e, String oldValueFilePath, StringSetter setter, Boolean isDir) {
     	JFileChooser fileChooser = new JFileChooser();
-		Program currentProgram = configurationModel.getCurrentProgram();
+		String currentProgramPath = this.sandBlasterPlugin.getCurrentProgramPath();
+		logUtil.logMessage(currentProgramPath);
 		
     	if (!oldValueFilePath.equals("")) {
     		fileChooser.setCurrentDirectory(new File(oldValueFilePath));
-    	} else if (currentProgram != null) {
-    		File file = new File(currentProgram.getExecutablePath());
+    	} else if (currentProgramPath != null) {
+    		File file = new File(currentProgramPath);
     		fileChooser.setCurrentDirectory(file);
 		}
     	
@@ -427,6 +440,9 @@ public class ConfigurationController {
 		}
 		
 		configurationView.getStartButton().setEnabled(true);
+    	configurationView.getCancelButton().setEnabled(false);
+    	configurationView.getOutDirPathChooseButton().setEnabled(true);
+
     }
     
     private void prepareButtons() {
@@ -439,6 +455,7 @@ public class ConfigurationController {
     	configurationView.getKernelCacheFileChooseButton().setEnabled(false);
     	configurationView.getStartButton().setEnabled(false);
     	configurationView.getCancelButton().setEnabled(true);
+    	configurationView.getOutDirPathChooseButton().setEnabled(false);
     }
     
     private void startButtonAction(ActionEvent e) {
@@ -451,33 +468,23 @@ public class ConfigurationController {
     	});
     	
 		sandBlasterBackgroundTask = new SandBlasterBackgroundTask(this);
-//        sandBlasterBackgroundTask.execute();
+        sandBlasterBackgroundTask.execute();
     }
     
     private void cancelButtonAction(ActionEvent e) {
     	if (sandBlasterBackgroundTask != null) {
-    		sandBlasterBackgroundTask.cancel(false);
+    		sandBlasterBackgroundTask.cancel(true);
     	}
     	configurationView.getProgressBar().setIndeterminate(false);
     	configurationView.getProgressBar().setValue(0);
     }
     
-    private String getProjectDir() {
-    	Project project = configurationModel.getPluginTool().getProject();
-    	if (project != null) {
-    		String projectDirPath = project.getProjectLocator().getProjectDir().getAbsolutePath();
-    		if (projectDirPath != null) {
-    			return projectDirPath;
-    		} 
-    	}
-    	return null;
-    }
-    
-    public void taskDone() {
+    public void taskDone(String resultDirPathString) {
     	logMessage("Process completed!");
     	
         configurationView.getProgressBar().setIndeterminate(false);  // Makes the progress bar indeterminate
     	restoreButtons();
+    	this.resultModel.loadTreeData(new File(resultDirPathString));
     }
     
     public void logMessage(String msg) {

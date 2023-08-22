@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.io.File;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -15,7 +16,6 @@ import javax.swing.JToolBar;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreeSelectionModel;
 
 import resources.Icons;
@@ -37,39 +37,40 @@ public class ResultView {
     }
     
 	private void initGUI() {
-		// prepare Directory Tree
-		
-		directoryTree = new JTree((Object[]) null);
+		directoryTree = new JTree(new DefaultTreeModel(new DefaultMutableTreeNode()));
+		directoryTree.setRootVisible(false);
         directoryTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     	
     	treePanel = new JPanel(new BorderLayout());
     	treePanel.add(new JScrollPane(directoryTree), BorderLayout.CENTER);
-    	
-		// create toolbar and add button
-        refreshButton = new JButton(Icons.REFRESH_ICON);
-        refreshButton.setToolTipText("Refresh"); // This sets the tooltip text
-        
-    	openDirButton = new JButton(Icons.OPEN_FOLDER_ICON);
-    	openDirButton.setToolTipText("Refresh"); // This sets the tooltip text
-        
-        JToolBar toolBar = new JToolBar("My Toolbar");
-        toolBar.add(openDirButton);
-        toolBar.add(refreshButton);
-    	treePanel.add(toolBar, BorderLayout.PAGE_START);
     	
 		// prepare textview area
 		fileContentArea = new JTextPane();
         fileContentArea.setEditable(false);
 		JScrollPane fileViewScrollPane = new JScrollPane(fileContentArea);
 		
-
 		// add all elements to the main pane
         JSplitPane resultSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, treePanel, fileViewScrollPane);
         resultSplitPane.setDividerLocation(300);
         resultSplitPane.setPreferredSize(new Dimension(800, 600));
         
+		// create toolbar and add button
+    	openDirButton = new JButton(Icons.OPEN_FOLDER_ICON);
+    	openDirButton.setToolTipText("Open");
+    	
+        refreshButton = new JButton(Icons.REFRESH_ICON);
+        refreshButton.setToolTipText("Refresh");
+        
+        JToolBar toolBar = new JToolBar("My Toolbar");
+        toolBar.setBorder(BorderFactory.createEtchedBorder());
+        toolBar.setFloatable(false);  // prevent users from dragging the toolbar away
+        toolBar.addSeparator();
+        toolBar.add(openDirButton);
+        toolBar.add(refreshButton);
+        
 		resultPanel = new JPanel();
         resultPanel.setLayout(new BorderLayout());
+        resultPanel.add(toolBar, BorderLayout.PAGE_START);
         resultPanel.add(new JLabel("Results"));
         resultPanel.add(resultSplitPane, BorderLayout.CENTER);
 //        resultPanel.setVisible(false);
@@ -131,5 +132,4 @@ public class ResultView {
 	public void setCurrentDirectory(File currentDirectory) {
 		this.currentDirectory = currentDirectory;
 	}
-    
 }

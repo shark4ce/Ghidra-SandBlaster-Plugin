@@ -15,25 +15,17 @@
  */
 package sandblasterplugin;
 
-import java.awt.BorderLayout;
 import java.io.IOException;
-
-import javax.swing.*;
-
-import docking.ActionContext;
-import docking.ComponentProvider;
-import docking.action.DockingAction;
-import docking.action.MenuData;
-import docking.action.ToolBarData;
 import ghidra.app.ExamplesPluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
+import ghidra.framework.model.Project;
+import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
-import resources.Icons;
 
 /**
  * TODO: Provide class-level documentation that describes what this plugin does.
@@ -51,6 +43,7 @@ public class SandBlasterPlugin extends ProgramPlugin {
 
 	SandBlasterProvider provider;
 	Program program;
+	ToolOptions toolOptions;
 
 	/**
 	 * Plugin constructor.
@@ -62,8 +55,10 @@ public class SandBlasterPlugin extends ProgramPlugin {
 		super(tool);
 
 		// TODO: Customize provider (or remove if a provider is not desired)
-		String pluginName = getName();
-		provider = new SandBlasterProvider(tool, pluginName, currentProgram);
+		toolOptions = tool.getOptions(this.name);
+		provider = new SandBlasterProvider(this);
+		Msg.info(null, this.name);
+
 	    tool.addComponentProvider(provider, true);
 
 		// TODO: Customize help (or remove if help is not desired)
@@ -71,6 +66,29 @@ public class SandBlasterPlugin extends ProgramPlugin {
 		String anchorName = "HelpAnchor";
 		provider.setHelpLocation(new HelpLocation(topicName, anchorName));
 	}
+	
+    public String getProjectDirectoryPath() {
+    	Project project = this.getTool().getProject();
+    	if (project != null) {
+    		String projectDirPath = project.getProjectLocator().getProjectDir().getAbsolutePath();
+    		if (projectDirPath != null) {
+    			return projectDirPath;
+    		} 
+    	}
+    	return null;
+    }
+    
+    public String getCurrentProgramPath() {
+    	if (currentProgram != null) {
+    		return currentProgram.getExecutablePath();
+    	}
+		Msg.info(null, "dosent exist");
+    	return null;
+    }
+    
+    public ToolOptions getToolOptions() {
+    	return this.toolOptions;
+    }
 
 	@Override
 	public void init() {
@@ -82,7 +100,6 @@ public class SandBlasterPlugin extends ProgramPlugin {
     @Override
     protected void programActivated(Program p) {
         program = p;
-        provider.setProgram(p);
     }
     
 	 @Override

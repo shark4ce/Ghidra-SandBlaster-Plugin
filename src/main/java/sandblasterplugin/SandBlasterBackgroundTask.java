@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -13,11 +12,7 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import ghidra.framework.Application;
 
-import ghidra.framework.ApplicationConfiguration;
 import ghidra.framework.Platform;
-import ghidra.framework.plugintool.PluginTool;
-import ghidra.util.Msg;
-import ghidra.util.SystemUtilities;
 import sandblasterplugin.controllers.ConfigurationController;
 import sandblasterplugin.models.ConfigurationModel;
 
@@ -26,7 +21,7 @@ public class SandBlasterBackgroundTask extends SwingWorker<Void, String>{
 	
 	String iOSVersionString;
 	String extractSandBoxDataPythonScriptPathString;
-	String reverserSandBoxProfilesPythonScriptPathString;
+	String reverseSandBoxProfilesPythonScriptsDirPathString;
 	String python2FilePathString;
 	String python3FilePathString;
 	String outDirPathString;
@@ -43,18 +38,16 @@ public class SandBlasterBackgroundTask extends SwingWorker<Void, String>{
 	public SandBlasterBackgroundTask(ConfigurationController configurationController) {
 		this.configurationController = configurationController;
 
-		
 		String sandblasterToolPatString = getSandBlasterToolPathString();
-		extractSandBoxDataPythonScriptPathString = new File(String.join(File.separator, sandblasterToolPatString, "helpers", "extract_sandbox_data.py")).getAbsolutePath();
-		reverserSandBoxProfilesPythonScriptPathString = new File(String.join(File.separator, sandblasterToolPatString, "reverse-sandbox", "reverse_sandbox.py")).getAbsolutePath();
+		extractSandBoxDataPythonScriptPathString = String.join(File.separator, sandblasterToolPatString, "helpers", "extract_sandbox_data.py");
+		reverseSandBoxProfilesPythonScriptsDirPathString = String.join(File.separator, sandblasterToolPatString, "reverse-sandbox");
 		
 		iOSVersionString = configurationController.getConfigurationModel().getiOSVersionString();
 		python2FilePathString = configurationController.getConfigurationModel().getPython2BinPathString();
 		python3FilePathString = configurationController.getConfigurationModel().getPython3BinPathString();
 		outDirPathString = initOutDir(configurationController.getConfigurationModel().getOutDirPathString());
 		
-		
-		extractedSandboxOperationsFilePathString = String.join(File.separator, outDirPathString, iOSVersionString + "-iOSVersion.sandbox_operations", iOSVersionString + "-iOSVersion.sb_ops");
+		extractedSandboxOperationsFilePathString = String.join(File.separator, mkdir(outDirPathString, iOSVersionString + "-iOSVersion.sandbox_operations"), iOSVersionString + "-iOSVersion.sb_ops");
 		extractedSandboxProfilesDirPathString = mkdir(outDirPathString, iOSVersionString + "-iOSVersion.sandbox_profiles");
 		reversedSandBoxProfileDirPathString = mkdir(outDirPathString, iOSVersionString + "-iOSVersion.reversed_profiles");
 		
@@ -62,15 +55,12 @@ public class SandBlasterBackgroundTask extends SwingWorker<Void, String>{
 	 	
 	public String getSandBlasterToolPathString() {
 	    // Get the directory where Ghidra is installed
-	    File ghidraInstallDir = new File(Application.getInstallationDirectory().getAbsolutePath());
-
-	    // Construct the path to your plugin/module's directory within Ghidra
-	    String pluginName = this.configurationController.getConfigurationModel().getPluginName();
-	    File pluginDir = new File(ghidraInstallDir, String.join(File.separator, "Ghidra", "Features", pluginName));
+		
+	    File pluginInstallDir = new File(Application.getMyModuleRootDirectory().getAbsolutePath());
 
 	    // Construct the path to the os-specific directory within your module
 	    String platformDir = Platform.CURRENT_PLATFORM.getDirectoryName();
-	    File osSpecificDir = new File(pluginDir, "os" + File.separator + platformDir);
+	    File osSpecificDir = new File(pluginInstallDir, "os" + File.separator + platformDir);
 
 	    return new File(osSpecificDir, "sandblaster").getAbsolutePath();
 	}
@@ -150,7 +140,7 @@ public class SandBlasterBackgroundTask extends SwingWorker<Void, String>{
 		// reverse sandbox profiles
 		String[] command3 = {
 				python2FilePathString, 
-				reverserSandBoxProfilesPythonScriptPathString, 
+				reverseSandBoxProfilesPythonScriptsDirPathString + File.separator + "reverse_sandbox.py", 
 				"-r",
 				iOSVersionString,
 				"-o",
@@ -163,13 +153,16 @@ public class SandBlasterBackgroundTask extends SwingWorker<Void, String>{
 	}
 
 
-    private int runCommand(String... command) {
+    private int runCommand(String executionDirectoryPathString, String... command) {
         ProcessBuilder processBuilder = new ProcessBuilder(command);
         processBuilder.redirectErrorStream(true);
-        StringBuilder output = new StringBuilder();
+        
+        if (executionDirectoryPathString != null) {
+            processBuilder.directory(new File(executionDirectoryPathString));
+        }
         
         try {
-        	publish("Running external command: [ " + String.join(" ", command) + " ]");
+        	publish("\nRunning external command: [ " + String.join(" ", command) + " ]");
             Process process = processBuilder.start();
 
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
@@ -178,7 +171,7 @@ public class SandBlasterBackgroundTask extends SwingWorker<Void, String>{
             	publish(line);
             }
             int exitCode = process.waitFor();
-            publish("Exit code: " + exitCode);
+            publish("Exit code: " + exitCode + "\n");
             return exitCode;
         } catch (IOException | InterruptedException e) {
         	publish("Error: " + e.toString());
@@ -191,21 +184,20 @@ public class SandBlasterBackgroundTask extends SwingWorker<Void, String>{
     protected Void doInBackground() throws Exception {
     	
     	getFirstCommands();
-    	
-    	int exitCode = runCommand(command1);
+    	int exitCode = runCommand(null, command1);
     	if (exitCode != 0) {
     		return null;
     	} 
     	
-    	exitCode = runCommand(command2);
+    	exitCode = runCommand(null, command2);
     	if (exitCode != 0) {
     		return null;
     	} 
     	
-    	exitCode = runCommand(command3);
-    	if (exitCode != 0) {
-    		return null;
-    	} 
+//    	exitCode = runCommand(reverseSandBoxProfilesPythonScriptsDirPathString, command3);
+//    	if (exitCode != 0) {
+//    		return null;
+//    	} 
 
         return null;
     }
@@ -219,7 +211,7 @@ public class SandBlasterBackgroundTask extends SwingWorker<Void, String>{
 
     @Override
     protected void done() {
-    	configurationController.taskDone();
+    	configurationController.taskDone(outDirPathString);
     }
 
 }

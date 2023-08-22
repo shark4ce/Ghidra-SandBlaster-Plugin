@@ -1,4 +1,4 @@
-package sandblasterplugin;
+package sandblasterplugin.utils;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -6,16 +6,13 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
-import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import javax.swing.JOptionPane;
-
-import ghidra.util.Msg;
+import sandblasterplugin.LoggerUtil;
 
 public class Utilities {
 	
