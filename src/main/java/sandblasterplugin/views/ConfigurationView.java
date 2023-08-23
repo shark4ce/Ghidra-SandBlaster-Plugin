@@ -48,9 +48,7 @@ public class ConfigurationView {
 	private JTextField outDirPathTextField;
 	
     private JTextArea logTextArea;
-	
     private JProgressBar progressBar;
-    
     private Dimension textFeildsDimension;
     
     public ConfigurationView() {
@@ -162,7 +160,7 @@ public class ConfigurationView {
         		layout.createSequentialGroup()
         		.addGap(6)
         		.addComponent(scrollInfoPane)
-        		.addGap(100)
+        		.addGap(70)
         		.addComponent(pythonPerqJPanel)
         		);
         
@@ -337,7 +335,7 @@ public class ConfigurationView {
 
         layout.setVerticalGroup(
         		layout.createSequentialGroup()
-        		.addGap(50)
+        		.addGap(30)
         		.addGroup(
         				layout.createParallelGroup(GroupLayout.Alignment.CENTER)
         				.addComponent(startButton)
@@ -345,7 +343,7 @@ public class ConfigurationView {
         				)
         		.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
         		.addComponent(progressBar)
-        		.addGap(20)
+        		.addGap(10)
         		);
         
         configurationPanel.add(controlPanel);
@@ -379,6 +377,14 @@ public class ConfigurationView {
 	
     public void displayWarning(String message) {
         JOptionPane.showMessageDialog(configurationPanel, message, "Warning", JOptionPane.WARNING_MESSAGE);
+    }
+    
+    public void displayError(String title, String message) {
+        JOptionPane.showMessageDialog(configurationPanel, message, title, JOptionPane.ERROR_MESSAGE);
+    }
+    
+    public void displaySuccess(String title, String message) {
+        JOptionPane.showMessageDialog(configurationPanel, message, title, JOptionPane.OK_OPTION);
     }
     
     

@@ -63,7 +63,7 @@ public class ResultView {
         
         JToolBar toolBar = new JToolBar("My Toolbar");
         toolBar.setBorder(BorderFactory.createEtchedBorder());
-        toolBar.setFloatable(false);  // prevent users from dragging the toolbar away
+        toolBar.setFloatable(false);
         toolBar.addSeparator();
         toolBar.add(openDirButton);
         toolBar.add(refreshButton);
@@ -73,7 +73,6 @@ public class ResultView {
         resultPanel.add(toolBar, BorderLayout.PAGE_START);
         resultPanel.add(new JLabel("Results"));
         resultPanel.add(resultSplitPane, BorderLayout.CENTER);
-//        resultPanel.setVisible(false);
 	}
 	
 	

@@ -85,7 +85,7 @@ public class ResultController implements PropertyChangeListener{
                 }
                 
                 if (file.isDirectory()) {
-                    setIcon(getClosedIcon()); // Use the directory (closed) icon irrespective of the fact if directory is empty or not
+                    setIcon(getClosedIcon());
                 } else {
                     setIcon(getLeafIcon());
                 }
@@ -102,7 +102,7 @@ public class ResultController implements PropertyChangeListener{
         
         File nodeFile = (File) node.getUserObject();
 	    if (!nodeFile.exists()) {
-        	resultView.displayWarning("Warning: The selected file/directory was deleted. Please, refresh.");
+        	resultView.displayWarning("The selected file/directory was deleted. Please, refresh.");
         	return;
 	    }
 	    

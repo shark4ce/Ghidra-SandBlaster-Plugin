@@ -43,6 +43,7 @@ public class SandBlasterPlugin extends ProgramPlugin {
 
 	SandBlasterProvider provider;
 	Program program;
+	Project project;
 	ToolOptions toolOptions;
 
 	/**
@@ -56,8 +57,8 @@ public class SandBlasterPlugin extends ProgramPlugin {
 
 		// TODO: Customize provider (or remove if a provider is not desired)
 		toolOptions = tool.getOptions(this.name);
+		project = tool.getProject();
 		provider = new SandBlasterProvider(this);
-		Msg.info(null, this.name);
 
 	    tool.addComponentProvider(provider, true);
 
@@ -68,13 +69,18 @@ public class SandBlasterPlugin extends ProgramPlugin {
 	}
 	
     public String getProjectDirectoryPath() {
-    	Project project = this.getTool().getProject();
-    	if (project != null) {
-    		String projectDirPath = project.getProjectLocator().getProjectDir().getAbsolutePath();
-    		if (projectDirPath != null) {
-    			return projectDirPath;
-    		} 
-    	}
+		String projectDirPath = project.getProjectLocator().getProjectDir().getAbsolutePath();
+		if (projectDirPath != null) {
+			return projectDirPath;
+		} 
+    	return null;
+    }
+    
+    public String getProjecName() {
+		String projectName = project.getName();
+		if (projectName != null) {
+			return projectName;
+		} 
     	return null;
     }
     
@@ -93,8 +99,6 @@ public class SandBlasterPlugin extends ProgramPlugin {
 	@Override
 	public void init() {
 		super.init();
-
-		// TODO: Acquire services if necessary
 	}
 	
     @Override
@@ -105,6 +109,7 @@ public class SandBlasterPlugin extends ProgramPlugin {
 	 @Override
 	 protected void dispose() {
 		 super.dispose();
+		 provider.getConfigurationController().cancelSandBlasterBackgroundTask();
 		 tool.removeComponentProvider(provider);
 	}
 
