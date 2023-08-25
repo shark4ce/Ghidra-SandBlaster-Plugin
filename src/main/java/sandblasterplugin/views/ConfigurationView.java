@@ -16,10 +16,15 @@ import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.JTextPane;
 import javax.swing.LayoutStyle;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 import javax.swing.border.TitledBorder;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Style;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 
@@ -70,25 +75,35 @@ public class ConfigurationView {
     private void addPrerequisitesPanel() {
     	
     	// Create Important Message Panel
-        String htmlContent = 
-        		"<html>"
-        		+ "<span style='color:red; font-weight:bold;'>Important!</span>"
-        		+ "    <p>The SandBlaster Plugin requires the following dependecnies to be installed and configuren on your sistem:</p>"
-        		+ "    <ul>"
-        		+ "        <li>Python2</li>"
-        		+ "        <li>Python3</li>"
-        		+ "		   <ul>"
-        		+ "        		<li><i>lief</i> package</li>"
-        		+ "    		</ul>"
-        		+ "    </ul>"
-        		+ "</html>";
+        JTextPane impInfoPane = new JTextPane();
+        StyledDocument doc = impInfoPane.getStyledDocument();
         
-        JEditorPane impInfoPane = new JEditorPane();
-        impInfoPane.setContentType("text/html");
+        Style redStyle = impInfoPane.addStyle("RedText", null);
+        StyleConstants.setForeground(redStyle, java.awt.Color.RED);
+        
+        Style italicStyle = impInfoPane.addStyle("ItalicText", null);
+        StyleConstants.setItalic(italicStyle, true);
+        
+        String emptyPaddingString = "      ";
+        try {
+            doc.insertString(doc.getLength(), "Important!\n\n", redStyle);
+            doc.insertString(doc.getLength(), 
+                "The SandBlaster Plugin requires the following dependencies to be installed and configured on your system:\n"
+                + emptyPaddingString + "*  Python2\n"
+                + emptyPaddingString + "*  Python3", null);
+            doc.insertString(doc.getLength(), "\n    " + emptyPaddingString + "- ", null);
+            doc.insertString(doc.getLength(), "pip", italicStyle);
+            doc.insertString(doc.getLength(), "\n    " + emptyPaddingString + "- ", null);
+            doc.insertString(doc.getLength(), "lief", italicStyle);
+        } catch (BadLocationException e) {
+            e.printStackTrace();
+        }
+        
         impInfoPane.setEditable(false);
+        Dimension preferedSizeDimension = impInfoPane.getPreferredSize();
         impInfoPane.setBackground(UIManager.getColor("Panel.background"));
         impInfoPane.setBorder(null);
-        impInfoPane.setText(htmlContent);
+
         JScrollPane scrollInfoPane = new JScrollPane(impInfoPane);
         scrollInfoPane.setBorder(null);
         
@@ -150,6 +165,12 @@ public class ConfigurationView {
                         .addComponent(python3BinChooseButton))
             );
         
+        Dimension dimension = new Dimension(preferedSizeDimension.width, pythonPerqJPanel.getMinimumSize().height + 18);
+        scrollInfoPane.setMinimumSize(dimension);
+        scrollInfoPane.setPreferredSize(dimension);
+        scrollInfoPane.setMaximumSize(dimension);
+
+        
         JPanel perquisitesJPanel = new JPanel();
         perquisitesJPanel.setBorder(createCustomBorder("Perquesits"));
         GroupLayout layout = new GroupLayout(perquisitesJPanel);
@@ -165,8 +186,8 @@ public class ConfigurationView {
         		);
         
         layout.setVerticalGroup(
-        		layout.createParallelGroup(Alignment.BASELINE)
-        		.addComponent(scrollInfoPane, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE)
+        		layout.createParallelGroup(Alignment.CENTER)
+        		.addComponent(scrollInfoPane)
         		.addComponent(pythonPerqJPanel)
         		);
         
@@ -352,6 +373,7 @@ public class ConfigurationView {
     private void addLogArea() {
         logTextArea = new JTextArea();
         logTextArea.setEditable(false);
+       
         
         TitledBorder titledBorder = new TitledBorder(null, "Logs", TitledBorder.CENTER, TitledBorder.DEFAULT_POSITION);
         titledBorder.setTitleFont(new Font("AppleMyungjo", Font.BOLD, 15));

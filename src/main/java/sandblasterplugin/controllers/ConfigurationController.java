@@ -2,12 +2,9 @@ package sandblasterplugin.controllers;
 
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 
-import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
@@ -18,11 +15,14 @@ import docking.widgets.filechooser.GhidraFileChooserMode;
 import sandblasterplugin.SandBlasterPlugin;
 import sandblasterplugin.backgroundtasks.BaseSandBlasterBackgroundTask;
 import sandblasterplugin.backgroundtasks.SandBlasterTaskDataFactory;
+import sandblasterplugin.backgroundtasks.general.CommandRunnerTask;
+import sandblasterplugin.backgroundtasks.general.TaskExecutor;
 import sandblasterplugin.enums.PropertyChangeEventNames;
 import sandblasterplugin.models.ConfigurationModel;
 import sandblasterplugin.models.ResultModel;
 import sandblasterplugin.utils.Utilities;
 import sandblasterplugin.views.ConfigurationView;
+
 
 
 public class ConfigurationController {
@@ -32,6 +32,8 @@ public class ConfigurationController {
 	private ConfigurationView configurationView;
 	private SandBlasterPlugin sandBlasterPlugin;
 	private BaseSandBlasterBackgroundTask sandBlasterBackgroundTask;
+    private TaskExecutor taskExecutor;
+
 
     public ConfigurationController(
     		ConfigurationModel configurationModel, 
@@ -44,6 +46,8 @@ public class ConfigurationController {
     	this.configurationView = configurationView;
     	this.sandBlasterPlugin = sandBlasterPlugin;
     	this.resultModel = resultModel;
+    	
+    	this.taskExecutor = new TaskExecutor();
     	this.sandBlasterBackgroundTask = null;
 
     	initListeners();
@@ -202,14 +206,16 @@ public class ConfigurationController {
     	// python buttons
     private String getPythonInstallPath(String pythonBinPath) {
     	this.logMessage("Extracting the absolute path of the '" + pythonBinPath + "' installation directory...");
-    	return Utilities.runCommand(this, pythonBinPath, "-c", "import sys; print(sys.executable)");
+        CommandRunnerTask cmdRunnerTask = new CommandRunnerTask(new String[] {pythonBinPath, "-c", "import sys; print(sys.executable)"}, this::logMessage);
+        return taskExecutor.executeTask(cmdRunnerTask);
     }
     
     private Boolean isValidPythonBinary(String pythonPath, String pythonName, Boolean showErrorPane) {
-    	this.logMessage("Checking if file: '" + pythonPath + "' is a valid " + pythonName + "...");
-        String outputCommandString = Utilities.runCommand(this, pythonPath, "--version");
     	this.logMessage("");
-        if (outputCommandString != null && outputCommandString.startsWith(pythonName)) {
+    	this.logMessage("Checking if file: '" + pythonPath + "' is a valid " + pythonName + "...");
+        CommandRunnerTask cmdRunnerTask = new CommandRunnerTask(new String[] {pythonPath, "--version"}, this::logMessage);
+        String commandOutputString = taskExecutor.executeTask(cmdRunnerTask);
+        if(commandOutputString != null) {
         	this.logMessage("The '" + pythonPath + "' is a valid " + pythonName);
         	return true;
         }
@@ -219,40 +225,22 @@ public class ConfigurationController {
         if (showErrorPane) {
         	configurationView.displayError("Perquesits Error", msgString);
         }
-        return false;
-    }
-    
-    private Boolean isPythonPackageInstalled(String pythonPath, String pythonName, String packageName) {
-    	
-    	this.logMessage("Checking if " + pythonName + " has the '" + packageName + "' package installed...");
-    	String[] command = {pythonPath, "-m", "pip", "list"};
-    	this.logMessage("");
-    	this.logMessage("* Running external command: [ " + String.join(" ", command)+  " ]");
-        ProcessBuilder processBuilder = new ProcessBuilder(command);
-        boolean packageIsInstalled = false;
-        try {
-            Process process = processBuilder.start();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String line;
-            while ((line = reader.readLine()) != null) {
-            	this.logMessage("* " + line);
-                if (line.startsWith(packageName)) {
-                	packageIsInstalled = true;
-                	break;
-                }
-            }
-            int exitCode = process.waitFor();
-            this.logMessage("* Exit code: " + exitCode);
-            this.logMessage("");
-
-        } catch (IOException | InterruptedException e) {
-        	this.logMessage("* Error: " + e.toString());
-        	this.logMessage("");
-        }
         
-        if (packageIsInstalled) {
+    	return false;
+    }
+
+
+    private Boolean isPythonPackageInstalled(String pythonPath, String pythonName, String packageName) {
+    	this.logMessage("");
+    	this.logMessage("Checking if " + pythonName + " has the '" + packageName + "' package installed...");
+    	Boolean packageIsInstalled = false;
+        CommandRunnerTask cmdRunnerTask = new CommandRunnerTask(new String[] {pythonPath, "-m", "pip", "show", packageName}, this::logMessage);
+        String commandOutputString = taskExecutor.executeTask(cmdRunnerTask); 
+
+        
+        if (commandOutputString != null && commandOutputString.startsWith("Name: " + packageName)) {
         	this.logMessage(pythonName + " has the required '" + packageName + "' package installed.");
-        	return packageIsInstalled;
+        	return true;
         }
         
         String msgString = "The selected " + pythonName + " does not have required '" + packageName + "' package installed. Please, make sure to install them.";
@@ -264,20 +252,25 @@ public class ConfigurationController {
         if (response == JOptionPane.YES_OPTION) {
         	
         	// Try to install package
+        	this.logMessage("");
         	this.logMessage("Trying to install '" + packageName + "' package required by " + pythonName + "...");
-            String outputCommandString = Utilities.runCommand(this, pythonPath, "-m", "pip", "install", packageName);
-            if (outputCommandString != null) {
+        	cmdRunnerTask = new CommandRunnerTask(new String[] {pythonPath, "-m", "pip", "install", packageName}, this::logMessage);
+            commandOutputString = taskExecutor.executeTask(cmdRunnerTask);
+        	
+            if (commandOutputString != null) {
             	packageIsInstalled = true;
             }else {
             	String errorMsgString = "Unable to install '" + packageName + "' package required by " + pythonName + ". Please, make sure them to install them and try again.";
                 this.logMessage(errorMsgString);
             	configurationView.displayError("Perquesits Error", errorMsgString);
+            	packageIsInstalled = false;
             }
         }
         
 		return packageIsInstalled;
     }
     
+        
     private void choosePython2ButtonAction(ActionEvent e) {
     	GhidraFileChooser fileChooser = new GhidraFileChooser(null);
     	String currentPython2TextFieldValue = configurationModel.getPython2BinPathString();
@@ -311,8 +304,11 @@ public class ConfigurationController {
     }
     
     private void autoDetectPythonBinsButtonAction(ActionEvent e) {
+    	this.logMessage("");
     	this.logMessage("Trying to automatically detect required Python binaries...");
 
+    	
+    	// TO DO: change order
     	String python2Path = getPythonInstallPath("python2");
     	if (python2Path != null && isValidPythonBinary(python2Path, "Python 2", false)) {
         	configurationModel.setPython2BinPathString(python2Path);
@@ -338,6 +334,7 @@ public class ConfigurationController {
     	}
     }
     
+    
     // choose files action
     @FunctionalInterface
     interface StringSetter {
@@ -345,8 +342,6 @@ public class ConfigurationController {
     }
     
     private void chooseFileButtonAction(ActionEvent e, String oldValueFilePath, StringSetter setter, Boolean isDir) {
-//    	JFileChooser fileChooser = new JFileChooser();
-    	
     	GhidraFileChooser fileChooser = new GhidraFileChooser(null);
 		String currentProgramPath = this.sandBlasterPlugin.getCurrentProgramPath();
 		
@@ -357,7 +352,6 @@ public class ConfigurationController {
     		fileChooser.setCurrentDirectory(file);
 		}
     	
-//		
     	if (isDir) {
     		fileChooser.setFileSelectionMode(GhidraFileChooserMode.DIRECTORIES_ONLY);
     	} else {
@@ -397,6 +391,7 @@ public class ConfigurationController {
     private void okButtonAction(ActionEvent e) {
         String iOSVersionString = configurationView.getiOSVersionTextField().getText();
         
+    	this.logMessage("");
         if (iOSVersionString.equals("")) {
         	this.logMessage("iOS Version is not specified!");
             JOptionPane.showMessageDialog(configurationView.getConfigurationPanel(), "Please, specify a valid iOS version.");
@@ -409,7 +404,6 @@ public class ConfigurationController {
             return;
         }
         
-    	this.logMessage("");
         this.logMessage("Specified iOS Version: " + iOSVersionString);
         configurationModel.setiOSVersionString(iOSVersionString);
     }

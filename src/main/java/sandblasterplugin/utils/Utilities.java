@@ -1,5 +1,6 @@
 package sandblasterplugin.utils;
 
+import java.awt.Component;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -13,9 +14,18 @@ import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+import javax.swing.JFrame;
+
 import sandblasterplugin.controllers.ConfigurationController;
 
 public class Utilities {
+	
+	public static JFrame getFrameFromPanel(Component component) {
+	    while (component != null && !(component instanceof JFrame)) {
+	        component = component.getParent();
+	    }
+	    return (JFrame) component;
+	}
 	
     public static boolean isIOSVersionValid(String input) {
 //        return input.matches("[0-9]\\.([0-9](\\.[0-9])?)?");
@@ -34,23 +44,6 @@ public class Utilities {
      	return currentTimeAndDate;
     }
     
-    public static String readTextFile(File file) {
-        try {
-            byte[] bytes = Files.readAllBytes(file.toPath());
-            CharsetDecoder decoder = StandardCharsets.UTF_8.newDecoder();
-            decoder.onMalformedInput(CodingErrorAction.REPORT);
-            String content = decoder.decode(ByteBuffer.wrap(bytes)).toString();
-            
-            // If decoding succeeds, return the content
-            return content;
-        } catch (CharacterCodingException e) {
-            // The file is probably binary
-            return null;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
     
     public static String createDir(String path, String dirName) {
 		File outDirFile = new File(path, dirName);
@@ -62,31 +55,4 @@ public class Utilities {
         }
         return outDirFile.getAbsolutePath();
 	}
-    
-    public static String runCommand(ConfigurationController configurationController, String... command) {
-        ProcessBuilder processBuilder = new ProcessBuilder(command);
-        processBuilder.redirectErrorStream(true);
-        StringBuilder output = new StringBuilder();
-        
-        try {
-        	configurationController.logMessage("* Running external command: [ " + String.join(" ", command) + " ]");
-            Process process = processBuilder.start();
-
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String line;
-            while ((line = reader.readLine()) != null) {
-            	configurationController.logMessage("* " + line);
-                output.append(line).append("\n");
-            }
-            int exitCode = process.waitFor();
-            configurationController.logMessage("* Exit code: " + exitCode);
-            configurationController.logMessage("");
-            return exitCode == 0 ? output.toString().trim() : null;
-        } catch (IOException | InterruptedException e) {
-        	configurationController.logMessage("* Error: " + e.toString());
-            configurationController.logMessage("");
-
-            return null;
-        }
-    }
 }
