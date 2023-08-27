@@ -3,7 +3,6 @@ package sandblasterplugin.backgroundtasks.general;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
-// 1. CommandRunner
 public class CommandRunnerTask extends AbstractTask<String> {
     private final String[] command;
 

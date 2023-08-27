@@ -1,7 +1,5 @@
 package sandblasterplugin.backgroundtasks.general;
 
-import java.util.List;
-
 import javax.swing.SwingWorker;
 
 abstract class AbstractTask<T> extends SwingWorker<T, String> {

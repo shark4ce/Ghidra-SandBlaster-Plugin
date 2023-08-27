@@ -23,30 +23,28 @@ public class ConfigurationModel {
 	private String python3BinPathString;
 	
 	private String iOSVersionString;
-	private String kernelExtFilePathString;
-	private String sandboxdFilePathString;
-	private String kernelCacheFilePathString;
+	private String sandboxOperationsFilePathString;
+	private String sandboxProfilesFilePathString;
 	private String outDirPathString;
 	private String pluginLogFilePathString;
 	
 	private JTextArea logTextArea;
 	
+	private boolean isDataBundle;
+	
     private PrintWriter logFileWriter;
     private ToolOptions toolOptions;
-    private SandBlasterPlugin sandBlasterPlugin;
     private PropertyChangeSupport support;
 
 	public ConfigurationModel(JTextArea logTextArea, SandBlasterPlugin sandBlasterPlugin) throws IOException {
 		this.python2BinPathString = "";
 		this.python3BinPathString = "";
 		this.iOSVersionString = "";
-		this.kernelExtFilePathString = "";
-		this.sandboxdFilePathString = "";
-		this.kernelCacheFilePathString = "";
+		this.sandboxOperationsFilePathString = "";
+		this.sandboxProfilesFilePathString = "";
 		this.outDirPathString = "";
 		
 		this.logTextArea = logTextArea;
-		this.sandBlasterPlugin = sandBlasterPlugin;
 		this.toolOptions = sandBlasterPlugin.getToolOptions();
 
 	    String pluinLogOutDir = Utilities.createDir(Application.getMyModuleRootDirectory().getAbsolutePath(), "logs");
@@ -55,7 +53,6 @@ public class ConfigurationModel {
 
 	    this.support = new PropertyChangeSupport(this);
 	}
-	
 	
     public void logMessage(String msg) {
     	String currentTimeString = Utilities.getCurrentTime("yyyy-MM-dd HH:mm:ss");
@@ -84,15 +81,21 @@ public class ConfigurationModel {
 		}
 	}
     
+	public boolean isDataBundle() {
+		return isDataBundle;
+	}
+	
+	public void setDataBundleFlag(boolean value) {
+		isDataBundle = value;
+	}
+	
 	public String getPluginLogFilePathString() {
 		return pluginLogFilePathString;
 	}
 	
-	
 	public String getPython2BinPathString() {
 		return python2BinPathString;
 	}
-	
 	
 	public void setPython2BinPathString(String python2BinPathString) {
     	String oldPath = this.python2BinPathString;
@@ -131,41 +134,28 @@ public class ConfigurationModel {
         }
 	}
 	
-	public String getKernelExtFilePathString() {
-		return kernelExtFilePathString;
+	public String getSandboxOperationsFilePathString() {
+		return sandboxOperationsFilePathString;
 	}
 	
-	public void setKernelExtFilePathString(String kernelExtFilePathString) {
-        String oldPath = this.kernelExtFilePathString;
+	public void setSandboxOperationsFilePathString(String sandboxOperationsFilePathString) {
+        String oldPath = this.sandboxOperationsFilePathString;
         
         
-        this.kernelExtFilePathString = kernelExtFilePathString;
-        support.firePropertyChange(PropertyChangeEventNames.KERNEL_EXT_FILE_PATH_UPDATED.getEventName(), oldPath, kernelExtFilePathString);
+        this.sandboxOperationsFilePathString = sandboxOperationsFilePathString;
+        support.firePropertyChange(PropertyChangeEventNames.SANDBOX_OPERATIONS_FILE_PATH_UPDATED.getEventName(), oldPath, sandboxOperationsFilePathString);
 	}
 	
-	public String getSandboxdFilePathString() {
-		return sandboxdFilePathString;
-	}
-	public void setSandboxdFilePathString(String sandboxdFilePathString) {
-        String oldPath = this.sandboxdFilePathString;
-        
-        if (!sandboxdFilePathString.equals(oldPath)) {
-	        this.sandboxdFilePathString = sandboxdFilePathString;
-	        support.firePropertyChange(PropertyChangeEventNames.SANDBOXD_FILE_PATH_UPDATED.getEventName(), oldPath, sandboxdFilePathString);
-        }
+	public String getSandboxProfilesFilePathString() {
+		return sandboxProfilesFilePathString;
 	}
 	
-	public String getKernelCacheFilePathString() {
-		return kernelCacheFilePathString;
-	}
-
-
-	public void setKernelCacheFilePathString(String kernelCacheFilePathString) {
-        String oldPath = this.kernelCacheFilePathString;
+	public void setSandboxProfilesFilePathString(String sandboxProfilesFilePathString) {
+        String oldPath = this.sandboxProfilesFilePathString;
         
-        if (!kernelCacheFilePathString.equals(oldPath)) {
-	        this.kernelCacheFilePathString = kernelCacheFilePathString;
-	        support.firePropertyChange(PropertyChangeEventNames.KERNEL_CACHE_FILE_PATH_UPDATED.getEventName(), oldPath, kernelCacheFilePathString);
+        if (!sandboxProfilesFilePathString.equals(oldPath)) {
+	        this.sandboxProfilesFilePathString = sandboxProfilesFilePathString;
+	        support.firePropertyChange(PropertyChangeEventNames.SANDBOX_PROFILES_FILE_PATH_UPDATED.getEventName(), oldPath, sandboxProfilesFilePathString);
         }
 	}
 

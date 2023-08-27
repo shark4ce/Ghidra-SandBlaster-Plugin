@@ -2,6 +2,8 @@ package sandblasterplugin.views;
 
 import java.awt.Dimension;
 import java.awt.Font;
+import java.io.IOException;
+import java.net.URL;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -16,15 +18,10 @@ import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import javax.swing.JTextPane;
 import javax.swing.LayoutStyle;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 import javax.swing.border.TitledBorder;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Style;
-import javax.swing.text.StyleConstants;
-import javax.swing.text.StyledDocument;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 
@@ -36,32 +33,32 @@ public class ConfigurationView {
     private JButton autoDetectButton;
     private JButton python2BinChooseButton;
     private JButton python3BinChooseButton;
+    
     private JButton iOSVersionOkButton;
-	private JButton sandboxdFileChooseButton;
-	private JButton kernelExtFileChooseButton;
-	private JButton kernelCacheFileChooseButton;
+	private JButton sandboxProfilesFileChooseButton;
+	private JButton sandboxOperationsFileChooseButton;
 	private JButton outDirPathChooseButton;
+	
     private JButton startButton;
     private JButton cancelButton;
     
 	private JTextField python2TextField;
 	private JTextField python3TextField;
 	private JTextField iOSVersionTextField;
-	private JTextField kernelExtFilePathTextField;
-	private JTextField sandboxdFilePathTextField;
-	private JTextField kernelCacheFilePathTextField;
+	private JTextField sandboxOperationsFilePathTextField;
+	private JTextField sandboxProfilesFilePathTextField;
 	private JTextField outDirPathTextField;
 	
     private JTextArea logTextArea;
     private JProgressBar progressBar;
     private Dimension textFeildsDimension;
     
-    public ConfigurationView() {
+    public ConfigurationView() throws IOException {
     	this.textFeildsDimension = new Dimension(400, 25);
     	initGUI();
     }
     
-	private void initGUI(){
+	private void initGUI() throws IOException{
 		//create config panel
 		configurationPanel = new JPanel();
 		configurationPanel.setLayout(new BoxLayout(configurationPanel, BoxLayout.Y_AXIS));
@@ -72,46 +69,12 @@ public class ConfigurationView {
     	addLogArea();
 	}
 	
-    private void addPrerequisitesPanel() {
+    private void addPrerequisitesPanel() throws IOException {
     	
-    	// Create Important Message Panel
-        JTextPane impInfoPane = new JTextPane();
-        StyledDocument doc = impInfoPane.getStyledDocument();
-        
-        Style redStyle = impInfoPane.addStyle("RedText", null);
-        StyleConstants.setForeground(redStyle, java.awt.Color.RED);
-        
-        Style italicStyle = impInfoPane.addStyle("ItalicText", null);
-        StyleConstants.setItalic(italicStyle, true);
-        
-        String emptyPaddingString = "      ";
-        try {
-            doc.insertString(doc.getLength(), "Important!\n\n", redStyle);
-            doc.insertString(doc.getLength(), 
-                "The SandBlaster Plugin requires the following dependencies to be installed and configured on your system:\n"
-                + emptyPaddingString + "*  Python2\n"
-                + emptyPaddingString + "*  Python3", null);
-            doc.insertString(doc.getLength(), "\n    " + emptyPaddingString + "- ", null);
-            doc.insertString(doc.getLength(), "pip", italicStyle);
-            doc.insertString(doc.getLength(), "\n    " + emptyPaddingString + "- ", null);
-            doc.insertString(doc.getLength(), "lief", italicStyle);
-        } catch (BadLocationException e) {
-            e.printStackTrace();
-        }
-        
-        impInfoPane.setEditable(false);
-        Dimension preferedSizeDimension = impInfoPane.getPreferredSize();
-        impInfoPane.setBackground(UIManager.getColor("Panel.background"));
-        impInfoPane.setBorder(null);
-
-        JScrollPane scrollInfoPane = new JScrollPane(impInfoPane);
-        scrollInfoPane.setBorder(null);
-        
         // labels
     	JLabel specifyJLabel = new JLabel("Please, specify the path for the following items:");
     	JLabel python2Label = new JLabel("Python2" + ":");
     	JLabel python3Label = new JLabel("Python3" + ":");
-    	
     	
     	// Text Fields
         python2TextField = new JTextField();
@@ -124,8 +87,8 @@ public class ConfigurationView {
     	
     	// buttons
         autoDetectButton = new JButton("Auto Detect");
-        python2BinChooseButton = new JButton("Choose");
-        python3BinChooseButton = new JButton("Choose");
+        python2BinChooseButton = new JButton("Select");
+        python3BinChooseButton = new JButton("Select");
         
         // Merge rows into a panel
         JPanel pythonPerqJPanel = new JPanel();
@@ -134,7 +97,7 @@ public class ConfigurationView {
         
         pythonPerqgGoupLayout.setAutoCreateGaps(true);
         pythonPerqgGoupLayout.setAutoCreateContainerGaps(true);
-        pythonPerqgGoupLayout.linkSize(SwingConstants.HORIZONTAL, python2BinChooseButton, python3BinChooseButton, autoDetectButton);
+        pythonPerqgGoupLayout.linkSize(SwingConstants.HORIZONTAL, python2BinChooseButton, python3BinChooseButton);
         pythonPerqgGoupLayout.setHorizontalGroup(
         		pythonPerqgGoupLayout.createParallelGroup()
                     .addComponent(specifyJLabel)
@@ -165,49 +128,47 @@ public class ConfigurationView {
                         .addComponent(python3BinChooseButton))
             );
         
-        Dimension dimension = new Dimension(preferedSizeDimension.width, pythonPerqJPanel.getMinimumSize().height + 18);
-        scrollInfoPane.setMinimumSize(dimension);
-        scrollInfoPane.setPreferredSize(dimension);
-        scrollInfoPane.setMaximumSize(dimension);
-
+        
+    	// Create Important Message Panel
+        URL url = getClass().getResource("/html/importantMessage.html");
+        JEditorPane impInfoPane = new JEditorPane();
+        impInfoPane.setContentType("text/html");
+        impInfoPane.setEditable(false);
+        impInfoPane.setBackground(UIManager.getColor("Panel.background"));
+        impInfoPane.setBorder(null);
+    	impInfoPane.setPage(url);
         
         JPanel perquisitesJPanel = new JPanel();
-        perquisitesJPanel.setBorder(createCustomBorder("Perquesits"));
+        perquisitesJPanel.setBorder(createCustomBorder("Perquisites"));
         GroupLayout layout = new GroupLayout(perquisitesJPanel);
         perquisitesJPanel.setLayout(layout);
         
         //add info scroll and others
+        layout.setAutoCreateGaps(true);
+        layout.setAutoCreateContainerGaps(true);
         layout.setHorizontalGroup(
         		layout.createSequentialGroup()
         		.addGap(6)
-        		.addComponent(scrollInfoPane)
-        		.addGap(70)
+        		.addComponent(impInfoPane)
+        		.addGap(20)
         		.addComponent(pythonPerqJPanel)
         		);
         
         layout.setVerticalGroup(
         		layout.createParallelGroup(Alignment.CENTER)
-        		.addComponent(scrollInfoPane)
+        		.addComponent(impInfoPane)
         		.addComponent(pythonPerqJPanel)
         		);
-        
         
         configurationPanel.add(perquisitesJPanel);
     }
     
-    private void addInputDataPanel() {
-    	
-    	// input data panel
-        JPanel inputDataPanel = new JPanel();
-        inputDataPanel.setBorder(createCustomBorder("Input Data"));
-        GroupLayout groupLayout = new GroupLayout(inputDataPanel);
-        inputDataPanel.setLayout(groupLayout);
+    private void addInputDataPanel() throws IOException {
     	
         //labels
         JLabel iOSVersionJLabel = new JLabel("Specify a valid iOS version (x.x/x.x.x):");
-        JLabel kernelExtFilePathJLabel = new JLabel("Kernel SandBox Extension File Path:");
-        JLabel sandboxdFilePatJLabel = new JLabel("Sandboxd File Path:");
-        JLabel kernelCacheFilePathJLabel = new JLabel("Kernel Cache File Path:");
+        JLabel sandboxOperationsFilePathLabel = new JLabel("SandBox Operations Source File Path:");
+        JLabel sandboxProfilesFilePathLabel = new JLabel("SandBox Profiles Source File Path:");
         JLabel outDirPathJLabel = new JLabel("Output Directory Path:");
         
         // text fields
@@ -215,20 +176,15 @@ public class ConfigurationView {
         iOSVersionTextField.setHorizontalAlignment(SwingConstants.CENTER);
         iOSVersionTextField.setPreferredSize(textFeildsDimension);
         
-        kernelExtFilePathTextField = new JTextField();
-        kernelExtFilePathTextField.setPreferredSize(textFeildsDimension);
-        kernelExtFilePathTextField.setEditable(false);
-        kernelExtFilePathTextField.setEnabled(false);
+        sandboxOperationsFilePathTextField = new JTextField();
+        sandboxOperationsFilePathTextField.setPreferredSize(textFeildsDimension);
+        sandboxOperationsFilePathTextField.setEditable(false);
+        sandboxOperationsFilePathTextField.setEnabled(false);
         
-        sandboxdFilePathTextField = new JTextField();
-        sandboxdFilePathTextField.setPreferredSize(textFeildsDimension);
-        sandboxdFilePathTextField.setEditable(false);
-        sandboxdFilePathTextField.setEnabled(false);
-        
-        kernelCacheFilePathTextField = new JTextField();
-        kernelCacheFilePathTextField.setPreferredSize(textFeildsDimension);
-        kernelCacheFilePathTextField.setEditable(false);
-        kernelCacheFilePathTextField.setEnabled(false);
+        sandboxProfilesFilePathTextField = new JTextField();
+        sandboxProfilesFilePathTextField.setPreferredSize(textFeildsDimension);
+        sandboxProfilesFilePathTextField.setEditable(false);
+        sandboxProfilesFilePathTextField.setEnabled(false);
         
         outDirPathTextField = new JTextField();
         outDirPathTextField.setPreferredSize(textFeildsDimension);
@@ -236,52 +192,47 @@ public class ConfigurationView {
         
         // buttons
         iOSVersionOkButton = new JButton("OK");
+       
+        sandboxOperationsFileChooseButton = new JButton("Select");
+        sandboxOperationsFileChooseButton.setEnabled(false);
 
-        kernelExtFileChooseButton = new JButton("Choose");
-        kernelExtFileChooseButton.setEnabled(false);
-
-        sandboxdFileChooseButton = new JButton("Choose");
-        sandboxdFileChooseButton.setEnabled(false);
+        sandboxProfilesFileChooseButton = new JButton("Select");
+        sandboxProfilesFileChooseButton.setEnabled(false);
         
-        kernelCacheFileChooseButton = new JButton("Choose");
-        kernelCacheFileChooseButton.setEnabled(false);
+        outDirPathChooseButton = new JButton("Select");
         
-        outDirPathChooseButton = new JButton("Choose");
-        //set default value
-
+    	// input data panel
+        JPanel inputDataFieldsPanel = new JPanel();
+        GroupLayout groupLayout = new GroupLayout(inputDataFieldsPanel);
+        inputDataFieldsPanel.setLayout(groupLayout);
         
         groupLayout.setAutoCreateGaps(true);
         groupLayout.setAutoCreateContainerGaps(true);
-        groupLayout.linkSize(SwingConstants.HORIZONTAL, iOSVersionOkButton, kernelExtFileChooseButton, sandboxdFileChooseButton, kernelCacheFileChooseButton);
+        groupLayout.linkSize(SwingConstants.HORIZONTAL, iOSVersionOkButton, sandboxOperationsFileChooseButton, sandboxProfilesFileChooseButton, outDirPathChooseButton);
         groupLayout.setHorizontalGroup(
         		groupLayout.createSequentialGroup()
-//        		.addGap(0, 0, Short.MAX_VALUE)
         		.addGroup(
         				groupLayout.createParallelGroup(Alignment.TRAILING)
         				.addComponent(iOSVersionJLabel)
-        				.addComponent(kernelExtFilePathJLabel)
-        				.addComponent(sandboxdFilePatJLabel)
-        				.addComponent(kernelCacheFilePathJLabel)
+        				.addComponent(sandboxOperationsFilePathLabel)
+        				.addComponent(sandboxProfilesFilePathLabel)
         				.addComponent(outDirPathJLabel)
 
         				)
         		.addGroup(
         				groupLayout.createParallelGroup()
         				.addComponent(iOSVersionTextField, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-        				.addComponent(kernelExtFilePathTextField, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-        				.addComponent(sandboxdFilePathTextField, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-        				.addComponent(kernelCacheFilePathTextField, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+        				.addComponent(sandboxOperationsFilePathTextField, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+        				.addComponent(sandboxProfilesFilePathTextField, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
         				.addComponent(outDirPathTextField, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
         				)
         		.addGroup(
         				groupLayout.createParallelGroup()
         				.addComponent(iOSVersionOkButton)
-        				.addComponent(kernelExtFileChooseButton)
-        				.addComponent(sandboxdFileChooseButton)
-        				.addComponent(kernelCacheFileChooseButton)
+        				.addComponent(sandboxOperationsFileChooseButton)
+        				.addComponent(sandboxProfilesFileChooseButton)
         				.addComponent(outDirPathChooseButton)
         				)
-        		.addGap(0, 0, Short.MAX_VALUE)
         		);
         
         
@@ -295,21 +246,15 @@ public class ConfigurationView {
         				)
         		.addGroup(
         				groupLayout.createParallelGroup(Alignment.BASELINE)
-        				.addComponent(kernelExtFilePathJLabel)
-        				.addComponent(kernelExtFilePathTextField)
-        				.addComponent(kernelExtFileChooseButton)
+        				.addComponent(sandboxOperationsFilePathLabel)
+        				.addComponent(sandboxOperationsFilePathTextField)
+        				.addComponent(sandboxOperationsFileChooseButton)
         				)
         		.addGroup(
         				groupLayout.createParallelGroup(Alignment.BASELINE)
-        				.addComponent(sandboxdFilePatJLabel)
-        				.addComponent(sandboxdFilePathTextField)
-        				.addComponent(sandboxdFileChooseButton)
-        				)
-        		.addGroup(
-        				groupLayout.createParallelGroup(Alignment.BASELINE)
-        				.addComponent(kernelCacheFilePathJLabel)
-        				.addComponent(kernelCacheFilePathTextField)
-        				.addComponent(kernelCacheFileChooseButton)
+        				.addComponent(sandboxProfilesFilePathLabel)
+        				.addComponent(sandboxProfilesFilePathTextField)
+        				.addComponent(sandboxProfilesFileChooseButton)
         				)
         		.addGroup(
         				groupLayout.createParallelGroup(Alignment.BASELINE)
@@ -317,6 +262,38 @@ public class ConfigurationView {
         				.addComponent(outDirPathTextField)
         				.addComponent(outDirPathChooseButton)
         				)
+        		);
+        
+        
+    	// Create Important Message Panel
+        URL url = this.getClass().getResource("/html/descriptionMessage.html");
+        JEditorPane impInfoPane = new JEditorPane();
+        impInfoPane.setContentType("text/html");
+        impInfoPane.setEditable(false);
+        impInfoPane.setBackground(UIManager.getColor("Panel.background"));
+        impInfoPane.setBorder(null);
+    	impInfoPane.setPage(url);
+        
+        JPanel inputDataPanel = new JPanel();
+        inputDataPanel.setBorder(createCustomBorder("Input Data"));
+        GroupLayout layout = new GroupLayout(inputDataPanel);
+        inputDataPanel.setLayout(layout);
+        
+        //add info scroll and others
+        layout.setAutoCreateGaps(true);
+        layout.setAutoCreateContainerGaps(true);
+        layout.setHorizontalGroup(
+        		layout.createSequentialGroup()
+        		.addGap(6)
+        		.addComponent(inputDataFieldsPanel, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE)
+        		.addGap(132)
+        		.addComponent(impInfoPane)
+        		);
+        
+        layout.setVerticalGroup(
+        		layout.createParallelGroup(Alignment.CENTER)
+        		.addComponent(inputDataFieldsPanel)
+        		.addComponent(impInfoPane)
         		);
         
         configurationPanel.add(inputDataPanel);
@@ -346,17 +323,16 @@ public class ConfigurationView {
         				layout.createParallelGroup(GroupLayout.Alignment.CENTER)
         				.addGroup(
         						layout.createSequentialGroup()
-        						.addGap(0, 0, Short.MAX_VALUE) // This will push buttons to the center
+        						.addGap(0, 0, Short.MAX_VALUE)
         						.addComponent(startButton)
         						.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
         						.addComponent(cancelButton)
-        						.addGap(0, 0, Short.MAX_VALUE)) // This will push buttons to the center
+        						.addGap(0, 0, Short.MAX_VALUE))
         				.addComponent(progressBar))
         		);
 
         layout.setVerticalGroup(
         		layout.createSequentialGroup()
-        		.addGap(30)
         		.addGroup(
         				layout.createParallelGroup(GroupLayout.Alignment.CENTER)
         				.addComponent(startButton)
@@ -364,7 +340,6 @@ public class ConfigurationView {
         				)
         		.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
         		.addComponent(progressBar)
-        		.addGap(10)
         		);
         
         configurationPanel.add(controlPanel);
@@ -374,13 +349,13 @@ public class ConfigurationView {
         logTextArea = new JTextArea();
         logTextArea.setEditable(false);
        
-        
         TitledBorder titledBorder = new TitledBorder(null, "Logs", TitledBorder.CENTER, TitledBorder.DEFAULT_POSITION);
-        titledBorder.setTitleFont(new Font("AppleMyungjo", Font.BOLD, 15));
+        titledBorder.setTitleFont(new Font("AppleMyungjo", Font.BOLD, 14));
         
         JScrollPane logJScrollPane = new JScrollPane();
         logJScrollPane.setBorder(titledBorder);
         logJScrollPane.setViewportView(logTextArea);
+        logJScrollPane.setPreferredSize(new Dimension(logJScrollPane.getMaximumSize().width, 280));
         
         configurationPanel.add(logJScrollPane);
     }
@@ -389,14 +364,11 @@ public class ConfigurationView {
     private Border createCustomBorder(String title) {
 
         TitledBorder titledBorder = new TitledBorder(null, title, TitledBorder.CENTER, TitledBorder.DEFAULT_POSITION);
-        titledBorder.setTitleFont(new Font("AppleMyungjo", Font.BOLD, 15));  // Setting the font of the title
-        Border externalBorder = new EmptyBorder(10, 0, 0, 0); // Top, Left, Bottom, Right
-        Border interiorBorder = new EmptyBorder(20, 20, 20, 20); // Top, Left, Bottom, Right
-        Border compundInteriorBorder = BorderFactory.createCompoundBorder(titledBorder, interiorBorder);
-        return BorderFactory.createCompoundBorder(externalBorder, compundInteriorBorder);
+        titledBorder.setTitleFont(new Font("AppleMyungjo", Font.BOLD, 14));
+        Border externalBorder = new EmptyBorder(8, 0, 0, 0);
+        return BorderFactory.createCompoundBorder(externalBorder, titledBorder);
     }
 
-	
     public void displayWarning(String message) {
         JOptionPane.showMessageDialog(configurationPanel, message, "Warning", JOptionPane.WARNING_MESSAGE);
     }
@@ -406,7 +378,7 @@ public class ConfigurationView {
     }
     
     public void displaySuccess(String title, String message) {
-        JOptionPane.showMessageDialog(configurationPanel, message, title, JOptionPane.OK_OPTION);
+        JOptionPane.showMessageDialog(configurationPanel, message);
     }
     
     
@@ -431,18 +403,14 @@ public class ConfigurationView {
 		return iOSVersionOkButton;
 	}
 
-	public JButton getSandboxdFileChooseButton() {
-		return sandboxdFileChooseButton;
+	public JButton getSandboxProfilesFileChooseButton() {
+		return sandboxProfilesFileChooseButton;
 	}
 
-	public JButton getKernelExtFileChooseButton() {
-		return kernelExtFileChooseButton;
+	public JButton getSandboxOperationsFileChooseButton() {
+		return sandboxOperationsFileChooseButton;
 	}
 	
-	public JButton getKernelCacheFileChooseButton() {
-		return kernelCacheFileChooseButton;
-	}
-
 	public JButton getOutDirPathChooseButton() {
 		return outDirPathChooseButton;
 	}
@@ -467,16 +435,12 @@ public class ConfigurationView {
 		return iOSVersionTextField;
 	}
 
-	public JTextField getKernelExtFilePathTextField() {
-		return kernelExtFilePathTextField;
+	public JTextField getSandboxOperationsFilePathTextField() {
+		return sandboxOperationsFilePathTextField;
 	}
 
-	public JTextField getSandboxdFilePathTextField() {
-		return sandboxdFilePathTextField;
-	}
-
-	public JTextField getKernelCacheFilePathTextField() {
-		return kernelCacheFilePathTextField;
+	public JTextField getSandboxProfilesFilePathTextField() {
+		return sandboxProfilesFilePathTextField;
 	}
 
 	public JTextField getOutDirPathTextField() {
@@ -490,5 +454,4 @@ public class ConfigurationView {
 	public JProgressBar getProgressBar() {
 		return progressBar;
 	}
-    
 }

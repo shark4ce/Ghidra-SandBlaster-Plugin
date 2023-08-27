@@ -33,7 +33,7 @@ public class TaskExecutor {
         loadingDialog.show();
 
         try {
-            latch.await();  // Wait for the SwingWorker to complete
+            latch.await();
         } catch (InterruptedException e) {
             task.logMessage("Error waiting for result: " + e.getMessage());
         }

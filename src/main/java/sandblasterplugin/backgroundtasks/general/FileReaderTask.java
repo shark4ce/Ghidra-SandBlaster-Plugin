@@ -24,10 +24,8 @@ public class FileReaderTask extends AbstractTask<String> {
             decoder.onMalformedInput(CodingErrorAction.REPORT);
             String content = decoder.decode(ByteBuffer.wrap(bytes)).toString().trim();
             
-            // If decoding succeeds, return the content
             return content;
         } catch (IOException e) {
-            // The file is probably binary
             return null;
         }
     }

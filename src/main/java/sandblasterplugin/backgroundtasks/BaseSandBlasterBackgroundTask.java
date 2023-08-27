@@ -16,16 +16,15 @@ import javax.swing.SwingWorker;
 import ghidra.framework.Application;
 import ghidra.framework.Platform;
 import sandblasterplugin.controllers.ConfigurationController;
+import sandblasterplugin.models.ConfigurationModel;
 import sandblasterplugin.utils.Utilities;
 
-public abstract class BaseSandBlasterBackgroundTask  extends SwingWorker<Void, String> {
+public abstract class BaseSandBlasterBackgroundTask extends SwingWorker<Void, String> {
 
 	protected Process currentProcess;
 	protected PrintWriter logPrintWriter;
 	protected ConfigurationController configurationController;
 	
-	protected volatile boolean flag = false;
-
 	protected String extractSandBoxDataPythonScriptPathString;
 	protected String reverseSandBoxProfilesPythonScriptPathString;
 	protected String reverseSandBoxProfilesPythonScriptsDirPathString;
@@ -42,24 +41,17 @@ public abstract class BaseSandBlasterBackgroundTask  extends SwingWorker<Void, S
 	protected String reversedSandBoxProfileDirPathString;
     
 	
-	public BaseSandBlasterBackgroundTask (
-			ConfigurationController configurationController,
-			String python2FilePathString,
-			String python3FilePathString,
-			String iOSVersionString,
-			String sandboxOperationsSourceFilePathString, 
-			String sandboxProfilesSourceFilePathString, 
-			String mainOutDirPathString
-			) throws IOException 
-	{
+	public BaseSandBlasterBackgroundTask (ConfigurationController configurationController) throws IOException {
+		ConfigurationModel configurationModel = configurationController.getConfigurationModel();
+
 		this.currentProcess = null;
 		this.configurationController = configurationController;
-		this.python2FilePathString = python2FilePathString;
-		this.python3FilePathString = python3FilePathString;
-		this.iOSVersionString = iOSVersionString;
-		this.sandboxOperationsSourceFilePathString = sandboxOperationsSourceFilePathString;
-		this.sandboxProfilesSourceFilePathString = sandboxProfilesSourceFilePathString;
-		this.outDirPathString = initOutDir(mainOutDirPathString);
+		this.python2FilePathString = configurationModel.getPython2BinPathString();
+		this.python3FilePathString = configurationModel.getPython3BinPathString();
+		this.iOSVersionString = configurationModel.getiOSVersionString();
+		this.sandboxOperationsSourceFilePathString = configurationModel.getSandboxOperationsFilePathString();
+		this.sandboxProfilesSourceFilePathString = configurationModel.getSandboxProfilesFilePathString();
+		this.outDirPathString = initOutDir(configurationModel.getOutDirPathString());
         this.logPrintWriter = new PrintWriter(new BufferedWriter(new FileWriter(new File(this.outDirPathString, iOSVersionString + "-iOSVersion.log" ))));
 		
 		// get sandblaster resources
@@ -67,9 +59,10 @@ public abstract class BaseSandBlasterBackgroundTask  extends SwingWorker<Void, S
 		initOutPutDirectories();
 	}
 	
+	// abstract method
+	protected abstract int reverseSandBoxProfiles();
+	
 	private String initOutDir(String mainOutDirPathString) {
-		
-		//TO DO: set python paths
 		
 		String sandblasterDirPathString = Utilities.createDir(mainOutDirPathString, "SandBlaster");
 		if (sandblasterDirPathString != null) {
@@ -153,9 +146,7 @@ public abstract class BaseSandBlasterBackgroundTask  extends SwingWorker<Void, S
 		
 		return runCommand(null, command);
 	}
-	
-	protected abstract int reverseSandBoxProfiles();
-	
+		
 	protected void printConfiguration() {
 		publish("");
 		publish("SandBlaster process started with following configuration:");
@@ -216,7 +207,7 @@ public abstract class BaseSandBlasterBackgroundTask  extends SwingWorker<Void, S
     @Override
     protected void done() {
         try {
-            get(); // Check for any exceptions thrown during doInBackground
+            get();
         	String msgString = "Process completed! Check the results in the Results tab.";
         	logMessageToAllPipes(msgString);
         	logMessageToAllPipes("Output Directory with reversed SandBox Profiles: " + outDirPathString);
@@ -240,7 +231,6 @@ public abstract class BaseSandBlasterBackgroundTask  extends SwingWorker<Void, S
         }
     }
     
-    
     protected void logMessageToCurrentProcessFile(String message) {
     	 this.logPrintWriter.println(message);
     	 this.logPrintWriter.flush();
@@ -252,7 +242,6 @@ public abstract class BaseSandBlasterBackgroundTask  extends SwingWorker<Void, S
     	String message = "(" + currentTimeString + ") >>> " + msg;
     	logMessageToCurrentProcessFile(message);
     }
-    
     
     protected void closeLogPrintWriter() {
         if ( this.logPrintWriter != null) {

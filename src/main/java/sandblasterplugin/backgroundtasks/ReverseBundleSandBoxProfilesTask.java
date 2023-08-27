@@ -7,25 +7,8 @@ import sandblasterplugin.controllers.ConfigurationController;
 
 public class ReverseBundleSandBoxProfilesTask extends BaseSandBlasterBackgroundTask{
 
-	public ReverseBundleSandBoxProfilesTask(
-			ConfigurationController configurationController,
-			String python2FilePathString,
-			String python3FilePathString,
-			String iOSVersionString,
-			String sandboxOperationsSourceFilePathString, 
-			String sandboxProfilesSourceFilePathString, 
-			String outDirPathString
-			) throws IOException 
-	{
-		super(
-				configurationController,
-				python2FilePathString,
-				python3FilePathString,
-				iOSVersionString,
-				sandboxOperationsSourceFilePathString, 
-				sandboxProfilesSourceFilePathString, 
-				outDirPathString
-				);
+	public ReverseBundleSandBoxProfilesTask(ConfigurationController configurationController) throws IOException {
+		super(configurationController);
 	}
 
 	@Override

@@ -1,21 +1,12 @@
 package sandblasterplugin.controllers;
 
 import java.awt.Component;
-import java.awt.Dialog.ModalityType;
-import java.awt.FlowLayout;
-import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 
-import javax.swing.JDialog;
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JTree;
-import javax.swing.SwingUtilities;
-import javax.swing.SwingWorker;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
@@ -27,7 +18,6 @@ import sandblasterplugin.backgroundtasks.general.FileReaderTask;
 import sandblasterplugin.backgroundtasks.general.TaskExecutor;
 import sandblasterplugin.enums.PropertyChangeEventNames;
 import sandblasterplugin.models.ResultModel;
-import sandblasterplugin.utils.Utilities;
 import sandblasterplugin.views.ResultView;
 
 public class ResultController implements PropertyChangeListener{
@@ -105,7 +95,6 @@ public class ResultController implements PropertyChangeListener{
         }
     }	
 
-    
 	private void previewFilesAction(TreeSelectionEvent e) {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode) resultView.getDirectoryTree().getLastSelectedPathComponent();
 

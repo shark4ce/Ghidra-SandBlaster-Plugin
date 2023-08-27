@@ -7,25 +7,8 @@ import sandblasterplugin.controllers.ConfigurationController;
 
 public class ReverseMultipleSandBoxProfilesTask extends BaseSandBlasterBackgroundTask{
 
-	public ReverseMultipleSandBoxProfilesTask(
-			ConfigurationController configurationController,
-			String python2FilePathString,
-			String python3FilePathString,
-			String iOSVersionString,
-			String sandboxOperationsSourceFilePathString, 
-			String sandboxProfilesSourceFilePathString, 
-			String outDirPathString
-			) throws IOException
-	{
-		super(
-				configurationController,
-				python2FilePathString,
-				python3FilePathString,
-				iOSVersionString,
-				sandboxOperationsSourceFilePathString, 
-				sandboxProfilesSourceFilePathString, 
-				outDirPathString
-				);
+	public ReverseMultipleSandBoxProfilesTask(ConfigurationController configurationController) throws IOException {
+		super(configurationController);
 	}
 
 	@Override
