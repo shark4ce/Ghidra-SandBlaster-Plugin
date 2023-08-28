@@ -1,4 +1,4 @@
-# Ghidra Plugin
+# Ghidra SandBlasterPlugin
 
 [![Build Status](https://travis-ci.org/yourusername/ghidra-plugin.svg?branch=master)](https://travis-ci.org/yourusername/ghidra-plugin)
 [![GitHub Release](https://img.shields.io/github/release/yourusername/ghidra-plugin.svg)](https://github.com/yourusername/ghidra-plugin/releases)
@@ -21,7 +21,7 @@ The plugin handles the installation of additional Python 3 required packages, su
 
 ## Submodules
 
-This project includes the [SandBlaster](https://github.com/link-to-sandblaster-repo) submodule, which requires Python 2, Python 3, pip, and the `lief` package for Python 3.
+This project includes the [SandBlaster](https://github.com/malus-security/sandblaster.git) submodule, which requires Python 2, Python 3, pip, and the `lief` package for Python 3.
 
 ## Installation
 
@@ -47,14 +47,20 @@ This project includes the [SandBlaster](https://github.com/link-to-sandblaster-r
 
     This will generate a `.zip` file in the `dist` directory.
 
-4. Once built, the plugin can be installed in Ghidra by following the Ghidra plugin installation instructions.
+4. Once built, the plugin can be installed in Ghidra in `File → Install Extensions...`
 
 ## Usage
 
 Provide detailed instructions on how to use the plugin.
 
 1. Start Ghidra.
-2. ...
+2. Open `File → Configure → Miscellaneous` and enable `SandBlasterPlugin`
+3. Open `Window → SandBlasterPlugin` and the main window of plugin will be displayed
+4. Specify Python2 and Python3 bin paths or use `Auto Detect` action
+5. Specify a valid `iOS Version` and the `SandBox Operations File Source` and `SandBox Profiles File Source`
+6. `Start` process
+7. View reversed SandBox profiles in the `Result` tab
+8. Check the logs
 
 ## Releases
 
