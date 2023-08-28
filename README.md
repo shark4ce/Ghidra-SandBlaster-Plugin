@@ -5,6 +5,9 @@
 
 This repository contains the source code for a Ghidra plugin. Ghidra is a software reverse engineering (SRE) framework created and maintained by the National Security Agency Research Directorate. This framework includes a suite of full-featured, high-end software analysis tools that enable users to analyze compiled code.
 
+The SandBlasterPlugin for Ghidra is a specialized tool based on the SandBlaster tool, designed to reverse engineer iOS sandbox profiles from their binary format into a human-readable SBPL (Sandbox Profile Language) format. iOS employs a security feature known as the sandbox, which restricts the capabilities of applications to access certain parts of the system or user data. These restrictions are defined in sandbox profiles, which are often stored in a binary format. The SandBlasterPlugin simplifies the analysis process by converting these binary profiles into the readable SBPL format, aiding researchers and security analysts in understanding and assessing the security implications of these profiles.
+
+
 ## Features
 
 - List of features of your plugin
