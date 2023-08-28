@@ -25,6 +25,8 @@ This project includes the [SandBlaster](https://github.com/malus-security/sandbl
 
 ## Installation
 
+Download Release version of extension and install it in Ghidra (skip to step 4) `OR`
+
 1. Clone this repository:
 
     ```
@@ -56,7 +58,7 @@ Provide detailed instructions on how to use the plugin.
 1. Start Ghidra.
 2. Open `File → Configure → Miscellaneous` and enable `SandBlasterPlugin`
 3. Open `Window → SandBlasterPlugin` and the main window of plugin will be displayed
-4. Specify Python2 and Python3 bin paths or use `Auto Detect` action
+4. Specify `Python2` and `Python3` bin paths or use `Auto Detect` action
 5. Specify a valid `iOS Version` and the `SandBox Operations File Source` and `SandBox Profiles File Source`
 6. `Start` process
 7. View reversed SandBox profiles in the `Result` tab
