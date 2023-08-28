@@ -1,7 +1,7 @@
 # Ghidra SandBlasterPlugin
 
-[![Build Status](https://travis-ci.org/yourusername/ghidra-plugin.svg?branch=master)](https://travis-ci.org/yourusername/ghidra-plugin)
-[![GitHub Release](https://img.shields.io/github/release/shark4ce/ghidra-plugin.svg)]([https://github.com/yourusername/ghidra-plugin/releases](https://github.com/shark4ce/ghidra-plugin-v2/releases/tag/v1.0.0))
+[![Build Status](https://travis-ci.org/shark4ce/ghidra-plugin-v2.svg?branch=master)](https://travis-ci.org/shark4ce/ghidra-plugin-v2)
+[![GitHub Release](https://img.shields.io/github/release/shark4ce/ghidra-plugin-v2.svg)]([https://github.com/shark4ce/ghidra-plugin-v2/releases])
 
 This repository contains the source code for a Ghidra plugin. Ghidra is a software reverse engineering (SRE) framework created and maintained by the National Security Agency Research Directorate. This framework includes a suite of full-featured, high-end software analysis tools that enable users to analyze compiled code.
 
