@@ -16,7 +16,7 @@ public class LoadingDialog {
      dialog.setSize(300, 150);
      dialog.setLocationRelativeTo(null);
      
-     JLabel loadingLabel = new JLabel("Please wait, retrieving results...");
+     JLabel loadingLabel = new JLabel("Please wait, loading...");
      loadingLabel.setHorizontalAlignment(SwingConstants.CENTER);
      dialog.add(loadingLabel);
  }
