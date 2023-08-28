@@ -2,9 +2,8 @@
 
 [![GitHub Release](https://img.shields.io/github/release/shark4ce/Ghidra-SandBlaster-Plugin.svg)](https://github.com/shark4ce/Ghidra-SandBlaster-Plugin/releases/)
 
-This repository contains the source code for a Ghidra plugin. Ghidra is a software reverse engineering (SRE) framework created and maintained by the National Security Agency Research Directorate. This framework includes a suite of full-featured, high-end software analysis tools that enable users to analyze compiled code.
 
-The SandBlasterPlugin for Ghidra is a specialized tool based on the SandBlaster tool, designed to reverse engineer iOS sandbox profiles from their binary format into a human-readable SBPL (Sandbox Profile Language) format. iOS employs a security feature known as the sandbox, which restricts the capabilities of applications to access certain parts of the system or user data. These restrictions are defined in sandbox profiles, which are often stored in a binary format. The SandBlasterPlugin simplifies the analysis process by converting these binary profiles into the readable SBPL format, aiding researchers and security analysts in understanding and assessing the security implications of these profiles.
+The SandBlaster Plugin for Ghidra is a specialized and sophisticated extension that leverages the functionalities of the SandBlaster tool to facilitate the streamlined analysis and reverse engineering of iOS sandbox profiles. This tool is essential in converting the profiles from their binary format into a human-readable SBPL (Sandbox Profile Language) format, directly within the Ghidra environment. The iOS operating system employs a security feature known as the sandbox, which imposes restrictions on applications, limiting their access to certain parts of the system or user data. These restrictions are delineated in sandbox profiles, typically stored in a binary format. The SandBlaster Plugin simplifies the analysis process by converting these binary profiles into the readable SBPL format, thereby aiding researchers and security analysts in comprehending and assessing the security implications of these profiles.
 
 
 ## Prerequisites
