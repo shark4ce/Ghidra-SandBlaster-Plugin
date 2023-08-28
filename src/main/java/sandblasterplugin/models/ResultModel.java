@@ -34,9 +34,13 @@ public class ResultModel {
     public void loadTreeData(File dir) {
         DefaultMutableTreeNode oldRootNode = this.rootNode;
         DefaultMutableTreeNode newRootNode = new DefaultMutableTreeNode(dir);
-        populateRootNode(dir, newRootNode);
-        this.rootNode = newRootNode;
-        support.firePropertyChange(PropertyChangeEventNames.TREE_ROOT_NODE_UPDATED.getEventName(), oldRootNode, newRootNode);
+        if (dir != null) {
+            populateRootNode(dir, newRootNode);
+            this.rootNode = newRootNode;
+        } else {
+            this.rootNode = null;
+        }
+        support.firePropertyChange(PropertyChangeEventNames.TREE_ROOT_NODE_UPDATED.getEventName(), oldRootNode, this.rootNode);
     }
     
 	public String getFileContentString() {

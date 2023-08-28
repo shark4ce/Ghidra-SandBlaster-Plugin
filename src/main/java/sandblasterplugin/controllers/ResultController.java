@@ -122,12 +122,16 @@ public class ResultController implements PropertyChangeListener{
 	
 	@Override
 	public void propertyChange(PropertyChangeEvent evt) {
-        if (PropertyChangeEventNames.TREE_ROOT_NODE_UPDATED.getEventName().equals(evt.getPropertyName()) && evt.getNewValue() != null) {
+        if (PropertyChangeEventNames.TREE_ROOT_NODE_UPDATED.getEventName().equals(evt.getPropertyName())) {
+        	DefaultMutableTreeNode newValue = (DefaultMutableTreeNode) evt.getNewValue();
         	JTree directoryTree = resultView.getDirectoryTree();
-        	((DefaultTreeModel) directoryTree.getModel()).setRoot((DefaultMutableTreeNode) evt.getNewValue());
-            if(!directoryTree.isRootVisible()) {
+        	if (newValue != null) {
+            	((DefaultTreeModel) directoryTree.getModel()).setRoot(newValue);
             	directoryTree.setRootVisible(true);
-            }
+        	} else {
+        		directoryTree.setRootVisible(false);
+            	((DefaultTreeModel) directoryTree.getModel()).setRoot(null);
+        	}
         } else if (PropertyChangeEventNames.FILE_CONTENT_UPDATED.getEventName().equals(evt.getPropertyName()) && evt.getNewValue() != null) {
         	resultView.getFileContentArea().setText((String)evt.getNewValue());
         }

@@ -6,7 +6,6 @@ import java.io.File;
 import java.io.IOException;
 
 import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
@@ -431,13 +430,13 @@ public class ConfigurationController {
 			} else {
 				sandBlasterBackgroundTask =  new ReverseMultipleSandBoxProfilesTask(this);
 			}
-			
-	    	SwingUtilities.invokeLater(() -> {
-	    		prepareButtons();
-	    		this.logMessage("Process started.....");
-	            configurationView.getProgressBar().setValue(100);
-	            configurationView.getProgressBar().setIndeterminate(true);  // Makes the progress bar indeterminate
-	    	});
+	    	resultModel.loadTreeData(null);
+		
+    		prepareButtons();
+    		this.logMessage("Process started.....");
+            configurationView.getProgressBar().setValue(100);
+            configurationView.getProgressBar().setIndeterminate(true);  // Makes the progress bar indeterminate
+
 	    	
 	        sandBlasterBackgroundTask.execute(); 
 		} catch (IOException exception) {
