@@ -64,7 +64,7 @@ Provide detailed instructions on how to use the plugin.
 
 ## Releases
 
-The built version of the Ghidra plugin can be found in the [releases](https://github.com/yourusername/ghidra-plugin/releases) section of this repository.
+The built version of the Ghidra plugin can be found in the [releases](https://github.com/shark4ce/ghidra-plugin-v2/releases/) section of this repository.
 
 ## Contributing
 
