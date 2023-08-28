@@ -16,7 +16,8 @@
 package sandblasterplugin;
 
 import java.io.IOException;
-import ghidra.app.ExamplesPluginPackage;
+
+import ghidra.MiscellaneousPluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.framework.model.Project;
@@ -32,11 +33,16 @@ import ghidra.util.Msg;
  */
 //@formatter:off
 @PluginInfo(
-	status = PluginStatus.STABLE,
-	packageName = ExamplesPluginPackage.NAME,
-	category = PluginCategoryNames.EXAMPLES,
-	shortDescription = "Plugin short description goes here.",
-	description = "Plugin long description goes here."
+	status = PluginStatus.RELEASED,
+	packageName = MiscellaneousPluginPackage.NAME,
+	category = PluginCategoryNames.ANALYSIS,
+	shortDescription = "SandBlasterPlugin: iOS Sandbox Profile Reverser",
+	description = "The SandBlasterPlugin for Ghidra is a specialized tool based on the SandBlaster tool, designed to reverse engineer iOS sandbox profiles "
+			+ "from their binary format into a human-readable SBPL (Sandbox Profile Language) format. iOS employs a security feature known as the sandbox, "
+			+ "which restricts the capabilities of applications to access certain parts of the system or user data. These restrictions are defined in "
+			+ "sandbox profiles, which are often stored in a binary format. The SandBlasterPlugin simplifies the analysis process by converting these "
+			+ "binary profiles into the readable SBPL format, aiding researchers and security analysts in understanding and assessing the security "
+			+ "implications of these profiles."
 )
 //@formatter:on
 public class SandBlasterPlugin extends ProgramPlugin {
@@ -55,16 +61,14 @@ public class SandBlasterPlugin extends ProgramPlugin {
 	public SandBlasterPlugin(PluginTool tool) throws IOException {
 		super(tool);
 
-		// TODO: Customize provider (or remove if a provider is not desired)
 		toolOptions = tool.getOptions(this.name);
 		project = tool.getProject();
 		provider = new SandBlasterProvider(this);
 
 	    tool.addComponentProvider(provider, true);
 
-		// TODO: Customize help (or remove if help is not desired)
 		String topicName = this.getClass().getPackage().getName();
-		String anchorName = "HelpAnchor";
+		String anchorName = "";
 		provider.setHelpLocation(new HelpLocation(topicName, anchorName));
 	}
 	
@@ -88,7 +92,6 @@ public class SandBlasterPlugin extends ProgramPlugin {
     	if (currentProgram != null) {
     		return currentProgram.getExecutablePath();
     	}
-		Msg.info(null, "dosent exist");
     	return null;
     }
     
