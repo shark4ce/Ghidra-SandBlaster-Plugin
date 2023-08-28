@@ -1,12 +1,15 @@
 package sandblasterplugin.views;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.io.IOException;
-import java.net.URL;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.io.InputStream;
+import java.util.Scanner;
 
 import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
 import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.Alignment;
 import javax.swing.JButton;
@@ -52,16 +55,20 @@ public class ConfigurationView {
     private JTextArea logTextArea;
     private JProgressBar progressBar;
     private Dimension textFeildsDimension;
+    private GridBagConstraints gbc;
     
-    public ConfigurationView() throws IOException {
+    public ConfigurationView() {
     	this.textFeildsDimension = new Dimension(400, 25);
     	initGUI();
     }
     
-	private void initGUI() throws IOException{
+	private void initGUI(){
 		//create config panel
 		configurationPanel = new JPanel();
-		configurationPanel.setLayout(new BoxLayout(configurationPanel, BoxLayout.Y_AXIS));
+		configurationPanel.setLayout(new GridBagLayout());
+        gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.BOTH;
+
 		
     	addPrerequisitesPanel();
     	addInputDataPanel();
@@ -69,7 +76,7 @@ public class ConfigurationView {
     	addLogArea();
 	}
 	
-    private void addPrerequisitesPanel() throws IOException {
+    private void addPrerequisitesPanel()  {
     	
         // labels
     	JLabel specifyJLabel = new JLabel("Please, specify the path for the following items:");
@@ -130,40 +137,30 @@ public class ConfigurationView {
         
         
     	// Create Important Message Panel
-        URL url = getClass().getResource("/html/importantMessage.html");
-        JEditorPane impInfoPane = new JEditorPane();
-        impInfoPane.setContentType("text/html");
-        impInfoPane.setEditable(false);
-        impInfoPane.setBackground(UIManager.getColor("Panel.background"));
-        impInfoPane.setBorder(null);
-    	impInfoPane.setPage(url);
-        
-        JPanel perquisitesJPanel = new JPanel();
+        JEditorPane impInfoPane = createaInfoPane("/html/importantMessage.html");
+        JPanel perquisitesJPanel = new JPanel(new GridBagLayout());
         perquisitesJPanel.setBorder(createCustomBorder("Perquisites"));
-        GroupLayout layout = new GroupLayout(perquisitesJPanel);
-        perquisitesJPanel.setLayout(layout);
+        GridBagConstraints constraints = new GridBagConstraints();
+
+      
+        constraints.gridx = 0;
+        constraints.gridy = 0;
+        constraints.weightx = 0.5;
+        constraints.weighty = 1;
+        constraints.anchor = GridBagConstraints.CENTER;
+        perquisitesJPanel.add(impInfoPane, constraints);
+
+        constraints.gridx = 1;
+        perquisitesJPanel.add(pythonPerqJPanel, constraints);
         
-        //add info scroll and others
-        layout.setAutoCreateGaps(true);
-        layout.setAutoCreateContainerGaps(true);
-        layout.setHorizontalGroup(
-        		layout.createSequentialGroup()
-        		.addGap(6)
-        		.addComponent(impInfoPane)
-        		.addGap(20)
-        		.addComponent(pythonPerqJPanel)
-        		);
-        
-        layout.setVerticalGroup(
-        		layout.createParallelGroup(Alignment.CENTER)
-        		.addComponent(impInfoPane)
-        		.addComponent(pythonPerqJPanel)
-        		);
-        
-        configurationPanel.add(perquisitesJPanel);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 1;
+        gbc.weighty = 0;
+        configurationPanel.add(perquisitesJPanel, gbc);
     }
     
-    private void addInputDataPanel() throws IOException {
+    private void addInputDataPanel() {
     	
         //labels
         JLabel iOSVersionJLabel = new JLabel("Specify a valid iOS version (x.x/x.x.x):");
@@ -266,37 +263,25 @@ public class ConfigurationView {
         
         
     	// Create Important Message Panel
-        URL url = this.getClass().getResource("/html/descriptionMessage.html");
-        JEditorPane impInfoPane = new JEditorPane();
-        impInfoPane.setContentType("text/html");
-        impInfoPane.setEditable(false);
-        impInfoPane.setBackground(UIManager.getColor("Panel.background"));
-        impInfoPane.setBorder(null);
-    	impInfoPane.setPage(url);
-        
-        JPanel inputDataPanel = new JPanel();
+        JEditorPane impInfoPane = createaInfoPane("/html/descriptionMessage.html");
+        JPanel inputDataPanel = new JPanel(new GridBagLayout());
         inputDataPanel.setBorder(createCustomBorder("Input Data"));
-        GroupLayout layout = new GroupLayout(inputDataPanel);
-        inputDataPanel.setLayout(layout);
+        GridBagConstraints constraints = new GridBagConstraints();
+
+        constraints.gridx = 0;
+        constraints.gridy = 0;
+        constraints.weightx = 0.5;
+        constraints.weighty = 1;
+        constraints.anchor = GridBagConstraints.CENTER;
+        inputDataPanel.add(inputDataFieldsPanel, constraints);
+
+        constraints.gridx = 1;
+        constraints.anchor = GridBagConstraints.NORTHWEST;
+        inputDataPanel.add(impInfoPane, constraints);
         
-        //add info scroll and others
-        layout.setAutoCreateGaps(true);
-        layout.setAutoCreateContainerGaps(true);
-        layout.setHorizontalGroup(
-        		layout.createSequentialGroup()
-        		.addGap(6)
-        		.addComponent(inputDataFieldsPanel, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE)
-        		.addGap(132)
-        		.addComponent(impInfoPane)
-        		);
-        
-        layout.setVerticalGroup(
-        		layout.createParallelGroup(Alignment.CENTER)
-        		.addComponent(inputDataFieldsPanel)
-        		.addComponent(impInfoPane)
-        		);
-        
-        configurationPanel.add(inputDataPanel);
+        gbc.gridy = 1;
+        gbc.weighty = 0;
+        configurationPanel.add(inputDataPanel, gbc);
     }
     
     private void addControlButtons() {
@@ -342,7 +327,9 @@ public class ConfigurationView {
         		.addComponent(progressBar)
         		);
         
-        configurationPanel.add(controlPanel);
+        gbc.gridy = 2;
+        gbc.weighty = 0;
+        configurationPanel.add(controlPanel, gbc);
     }
     
     private void addLogArea() {
@@ -355,9 +342,10 @@ public class ConfigurationView {
         JScrollPane logJScrollPane = new JScrollPane();
         logJScrollPane.setBorder(titledBorder);
         logJScrollPane.setViewportView(logTextArea);
-        logJScrollPane.setPreferredSize(new Dimension(logJScrollPane.getMaximumSize().width, 280));
         
-        configurationPanel.add(logJScrollPane);
+        gbc.gridy = 3;
+        gbc.weighty = 1;
+        configurationPanel.add(logJScrollPane, gbc);
     }
     
     // helpers
@@ -367,6 +355,26 @@ public class ConfigurationView {
         titledBorder.setTitleFont(new Font("AppleMyungjo", Font.BOLD, 14));
         Border externalBorder = new EmptyBorder(8, 0, 0, 0);
         return BorderFactory.createCompoundBorder(externalBorder, titledBorder);
+    }
+    
+    private JEditorPane createaInfoPane(String htmlResourcePath) {
+        Color backgroundColor = UIManager.getColor("Panel.background");
+        String hexColor = String.format("#%02x%02x%02x", backgroundColor.getRed(), backgroundColor.getGreen(), backgroundColor.getBlue());
+        
+        InputStream inputStrem = this.getClass().getResourceAsStream(htmlResourcePath);
+        try (Scanner scanner = new Scanner(inputStrem).useDelimiter("\\A")) {
+			String htmlContent = scanner.hasNext() ? scanner.next() : "";
+			htmlContent = htmlContent.replace("<body>", "<body bgcolor='" + hexColor + "'>");
+			
+			JEditorPane impInfoPane = new JEditorPane();
+			impInfoPane.setContentType("text/html");
+			impInfoPane.setEditable(false);
+			impInfoPane.setBackground(backgroundColor);
+			impInfoPane.setBorder(null);
+			impInfoPane.setText(htmlContent);
+			
+			return impInfoPane;
+		}
     }
 
     public void displayWarning(String message) {
@@ -380,7 +388,6 @@ public class ConfigurationView {
     public void displaySuccess(String title, String message) {
         JOptionPane.showMessageDialog(configurationPanel, message);
     }
-    
     
     //setters and getters
     public JPanel getConfigurationPanel() {
