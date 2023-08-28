@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 
 import javax.swing.JOptionPane;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
@@ -145,9 +146,9 @@ public class ConfigurationController {
         	configurationView.getSandboxOperationsFilePathTextField().setEnabled(true);
         	configurationView.getSandboxOperationsFileChooseButton().setEnabled(true);
         	configurationView.getSandboxProfilesFilePathTextField().setEnabled(true);
-        	
         	configurationModel.setDataBundleFlag(true);
         	isOneSrcFile = true;
+        	
             if (iOSMajorVersionInteger >= 5 && iOSMajorVersionInteger <= 8) {
             	configurationView.getSandboxProfilesFileChooseButton().setEnabled(true);
             	configurationModel.setDataBundleFlag(false);
@@ -158,18 +159,28 @@ public class ConfigurationController {
     
     private void ConfModelPropertyChangeListner(PropertyChangeEvent evt) {
         if (PropertyChangeEventNames.PYTHON2_BIN_PATH_UPDATED.getEventName().equals(evt.getPropertyName())) {
-        	configurationView.getPython2TextField().setText((String) evt.getNewValue());
+        	JTextField textField = configurationView.getPython2TextField();
+        	textField.setText((String) evt.getNewValue());
+            textField.setCaretPosition(textField.getText().length());
         } else if (PropertyChangeEventNames.PYTHON3_BIN_PATH_UPDATED.getEventName().equals(evt.getPropertyName())) {
-        	configurationView.getPython3TextField().setText((String) evt.getNewValue());
+        	JTextField textField = configurationView.getPython3TextField();
+        	textField.setText((String) evt.getNewValue());
+            textField.setCaretPosition(textField.getText().length());
         } else if (PropertyChangeEventNames.SANDBOX_OPERATIONS_FILE_PATH_UPDATED.getEventName().equals(evt.getPropertyName())) {
-        	configurationView.getSandboxOperationsFilePathTextField().setText((String) evt.getNewValue());
+        	JTextField textField = configurationView.getSandboxOperationsFilePathTextField();
+        	textField.setText((String) evt.getNewValue());
+            textField.setCaretPosition(textField.getText().length());
         	if (isOneSrcFile) {
         		configurationModel.setSandboxProfilesFilePathString((String) evt.getNewValue());
         	}
         } else if (PropertyChangeEventNames.SANDBOX_PROFILES_FILE_PATH_UPDATED.getEventName().equals(evt.getPropertyName())) {
-        	configurationView.getSandboxProfilesFilePathTextField().setText((String) evt.getNewValue());
+        	JTextField textField = configurationView.getSandboxProfilesFilePathTextField();
+        	textField.setText((String) evt.getNewValue());
+            textField.setCaretPosition(textField.getText().length());
         } else if (PropertyChangeEventNames.OUT_DIR_PATH_UPDATED.getEventName().equals(evt.getPropertyName())) {
-        	configurationView.getOutDirPathTextField().setText((String) evt.getNewValue());
+        	JTextField textField = configurationView.getOutDirPathTextField();
+        	textField.setText((String) evt.getNewValue());
+            textField.setCaretPosition(textField.getText().length());
         } else if (PropertyChangeEventNames.IOS_VERSION_VALUE_UPDATED.getEventName().equals(evt.getPropertyName())) {
         	enableRequiredFields((String) evt.getNewValue());
         }
