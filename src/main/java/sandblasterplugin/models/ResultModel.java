@@ -4,9 +4,6 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
 import javax.swing.tree.DefaultMutableTreeNode;
-
-import ghidra.app.util.bin.format.dwarf4.DIEAggregate;
-import ghidra.util.Msg;
 import sandblasterplugin.enums.PropertyChangeEventNames;
 
 public class ResultModel {
