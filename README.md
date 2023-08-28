@@ -1,4 +1,4 @@
-# Ghidra SandBlasterPlugin
+# Ghidra SandBlaster Plugin
 
 [![GitHub Release](https://img.shields.io/github/release/shark4ce/Ghidra-SandBlaster-Plugin.svg)](https://github.com/shark4ce/Ghidra-SandBlaster-Plugin/releases/)
 
