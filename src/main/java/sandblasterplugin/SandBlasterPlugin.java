@@ -26,7 +26,6 @@ import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
 
 /**
  * TODO: Provide class-level documentation that describes what this plugin does.
@@ -63,8 +62,8 @@ public class SandBlasterPlugin extends ProgramPlugin {
 
 		toolOptions = tool.getOptions(this.name);
 		project = tool.getProject();
+		
 		provider = new SandBlasterProvider(this);
-
 	    tool.addComponentProvider(provider, true);
 
 		String topicName = this.getClass().getPackage().getName();
