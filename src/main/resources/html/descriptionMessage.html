@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            margin-bottom: 10px;
+        }
+
+        .indent {
+            margin-left: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <p><strong>Required files for extracting and reversing SandBox Profiles:</strong></p>
+    <ul>
+        <li>
+            <strong>iOS Version: 4.x, 9.x - 11.x</strong>
+            <div class="indent">
+                - SandBox Operations File Source: <i>kernel sandbox extension</i><br>
+                - SandBox Profiles File Source: <i>kernel sandbox extension</i> (as a bundle)
+            </div>
+        </li>
+        <li>
+            <strong>iOS Version: 5.x - 8.x</strong>
+            <div class="indent">
+                - SandBox Operations File Source: <i>kernel sandbox extension</i><br>
+                - SandBox Profiles File Source: <i>sandboxd</i>
+            </div>
+        </li>
+        <li>
+            <strong>iOS Version: &gt; 12.x</strong>
+            <div class="indent">
+                - SandBox Operations File Source: <i>kernel cache</i><br>
+                - SandBox Profiles File Source: <i/>kernel cache</i> (as a bundle)
+            </div>
+        </li>
+    </ul>
+</body>
+
+</html>

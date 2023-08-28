@@ -1,5 +1,8 @@
 .gradle/
 build/
 dist/
-/bin/
+bin/
 .settings/
+.classpath
+.project
+.pydevproject

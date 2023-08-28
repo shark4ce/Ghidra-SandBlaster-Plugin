@@ -3,9 +3,7 @@ package sandblasterplugin.models;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
-
 import javax.swing.tree.DefaultMutableTreeNode;
-
 import sandblasterplugin.enums.PropertyChangeEventNames;
 
 public class ResultModel {

@@ -2,21 +2,22 @@ package sandblasterplugin.controllers;
 
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 
-import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import ghidra.util.Msg;
-import sandblasterplugin.LoggerUtil;
-import sandblasterplugin.SandBlasterBackgroundTask;
+import docking.widgets.filechooser.GhidraFileChooser;
+import docking.widgets.filechooser.GhidraFileChooserMode;
 import sandblasterplugin.SandBlasterPlugin;
+import sandblasterplugin.backgroundtasks.BaseSandBlasterBackgroundTask;
+import sandblasterplugin.backgroundtasks.ReverseBundleSandBoxProfilesTask;
+import sandblasterplugin.backgroundtasks.ReverseMultipleSandBoxProfilesTask;
+import sandblasterplugin.backgroundtasks.general.CommandRunnerTask;
+import sandblasterplugin.backgroundtasks.general.TaskExecutor;
 import sandblasterplugin.enums.PropertyChangeEventNames;
 import sandblasterplugin.models.ConfigurationModel;
 import sandblasterplugin.models.ResultModel;
@@ -26,15 +27,14 @@ import sandblasterplugin.views.ConfigurationView;
 
 public class ConfigurationController {
 	
+	private ResultModel resultModel;
 	private ConfigurationModel configurationModel;
 	private ConfigurationView configurationView;
-	private LoggerUtil logUtil;
-	private SandBlasterBackgroundTask sandBlasterBackgroundTask;
 	private SandBlasterPlugin sandBlasterPlugin;
-	private ResultModel resultModel;
+	private BaseSandBlasterBackgroundTask sandBlasterBackgroundTask;
+    private TaskExecutor taskExecutor;
+    private boolean isOneSrcFile;
 
-	
-	
     public ConfigurationController(
     		ConfigurationModel configurationModel, 
     		ConfigurationView configurationView, 
@@ -46,9 +46,12 @@ public class ConfigurationController {
     	this.configurationView = configurationView;
     	this.sandBlasterPlugin = sandBlasterPlugin;
     	this.resultModel = resultModel;
-    	this.logUtil = new LoggerUtil(configurationView.getLogTextArea());
+    	
+    	this.taskExecutor = new TaskExecutor();
+    	this.sandBlasterBackgroundTask = null;
 
     	initListeners();
+    	logMessage("Welcome!");
     }
     
     public ConfigurationModel getConfigurationModel() {
@@ -58,15 +61,14 @@ public class ConfigurationController {
 	public ConfigurationView getConfigurationView() {
 		return configurationView;
 	}
-
-	public LoggerUtil getLogUtil() {
-		return logUtil;
-	}
 	
 	public SandBlasterPlugin getSandBlasterPlugin() {
 		return this.sandBlasterPlugin;
 	}
 	
+	public BaseSandBlasterBackgroundTask getSandBlasterBackgroundTask() {
+		return sandBlasterBackgroundTask;
+	}
 	
 	// button actions
     private void initListeners() {
@@ -79,13 +81,14 @@ public class ConfigurationController {
     	configurationView.getAutoDetectButton().addActionListener(this::autoDetectPythonBinsButtonAction);
     	configurationView.getiOSVersionOkButton().addActionListener(this::okButtonAction);
     	
-    	configurationView.getKernelExtFileChooseButton().addActionListener(
+    	configurationView.getSandboxOperationsFileChooseButton().addActionListener(
     			e -> chooseFileButtonAction(
-    					e, configurationModel.getKernelExtFilePathString(), configurationModel::setKernelExtFilePathString, false)
+    					e, configurationModel.getSandboxOperationsFilePathString(), configurationModel::setSandboxOperationsFilePathString, false)
     			);
-    	configurationView.getSandboxdFileChooseButton().addActionListener(
+    	
+    	configurationView.getSandboxProfilesFileChooseButton().addActionListener(
     			e -> chooseFileButtonAction(
-    					e, configurationModel.getSandboxdFilePathString(), configurationModel::setSandboxdFilePathString, false)
+    					e, configurationModel.getSandboxProfilesFilePathString(), configurationModel::setSandboxProfilesFilePathString, false)
     			);
     	
 		String projectDirPath = this.sandBlasterPlugin.getProjectDirectoryPath();
@@ -102,8 +105,6 @@ public class ConfigurationController {
     	
     	// text view actions
     	configurationView.getiOSVersionTextField().addActionListener(this::okButtonAction);
-    
-    	
     	configurationView.getiOSVersionTextField().getDocument().addDocumentListener(new iOSVersionTextFieldDocumentListener());
     }
     
@@ -113,16 +114,12 @@ public class ConfigurationController {
         		!configurationModel.getPython3BinPathString().equals("") &&
         		!configurationModel.getiOSVersionString().equals("") &&
         		(
-        				!configurationModel.getKernelExtFilePathString().equals("") || 
-        				!configurationView.getKernelExtFilePathTextField().isEnabled()
+        				!configurationModel.getSandboxOperationsFilePathString().equals("") || 
+        				!configurationView.getSandboxOperationsFilePathTextField().isEnabled()
         		) &&
         		(
-        				!configurationModel.getSandboxdFilePathString().equals("") || 
-        				!configurationView.getSandboxdFilePathTextField().isEnabled()
-        		) &&
-        		(
-        				!configurationModel.getKernelCacheFilePathString().equals("") || 
-        				!configurationView.getKernelCacheFilePathTextField().isEnabled()
+        				!configurationModel.getSandboxProfilesFilePathString().equals("") || 
+        				!configurationView.getSandboxProfilesFilePathTextField().isEnabled()
         		) &&
         		!configurationModel.getOutDirPathString().equals("")
         		
@@ -137,44 +134,25 @@ public class ConfigurationController {
     
     private void enableRequiredFields(String iOSVersionString) {
     	if (iOSVersionString.equals("")) {
-        	configurationView.getKernelExtFilePathTextField().setEnabled(false);
-        	configurationView.getKernelExtFileChooseButton().setEnabled(false);
+        	configurationView.getSandboxOperationsFilePathTextField().setEnabled(false);
+        	configurationView.getSandboxOperationsFileChooseButton().setEnabled(false);
         	
-        	configurationView.getSandboxdFilePathTextField().setEnabled(false);
-        	configurationView.getSandboxdFileChooseButton().setEnabled(false);
+        	configurationView.getSandboxProfilesFilePathTextField().setEnabled(false);
+        	configurationView.getSandboxProfilesFileChooseButton().setEnabled(false);
         	
-        	configurationView.getKernelCacheFilePathTextField().setEnabled(false);
-        	configurationView.getKernelCacheFileChooseButton().setEnabled(false);
     	} else {
             Integer iOSMajorVersionInteger = Integer.parseInt(Utilities.getMajoriOSVersion(iOSVersionString));
+            
+        	configurationView.getSandboxOperationsFilePathTextField().setEnabled(true);
+        	configurationView.getSandboxOperationsFileChooseButton().setEnabled(true);
+        	configurationView.getSandboxProfilesFilePathTextField().setEnabled(true);
+        	
+        	configurationModel.setDataBundleFlag(true);
+        	isOneSrcFile = true;
             if (iOSMajorVersionInteger >= 5 && iOSMajorVersionInteger <= 8) {
-            	configurationView.getKernelExtFilePathTextField().setEnabled(true);
-            	configurationView.getKernelExtFileChooseButton().setEnabled(true);
-            	
-            	configurationView.getSandboxdFilePathTextField().setEnabled(true);
-            	configurationView.getSandboxdFileChooseButton().setEnabled(true);
-            	
-            	configurationView.getKernelCacheFilePathTextField().setEnabled(false);
-            	configurationView.getKernelCacheFileChooseButton().setEnabled(false);
-
-            } else if(iOSMajorVersionInteger >= 12) {
-            	configurationView.getKernelExtFilePathTextField().setEnabled(false);
-            	configurationView.getKernelExtFileChooseButton().setEnabled(false);
-            	
-            	configurationView.getSandboxdFilePathTextField().setEnabled(false);
-            	configurationView.getSandboxdFileChooseButton().setEnabled(false);
-            	
-            	configurationView.getKernelCacheFilePathTextField().setEnabled(true);
-            	configurationView.getKernelCacheFileChooseButton().setEnabled(true);
-            } else {
-            	configurationView.getKernelExtFilePathTextField().setEnabled(true);
-            	configurationView.getKernelExtFileChooseButton().setEnabled(true);
-            	
-            	configurationView.getSandboxdFilePathTextField().setEnabled(false);
-            	configurationView.getSandboxdFileChooseButton().setEnabled(false);
-            	
-            	configurationView.getKernelCacheFilePathTextField().setEnabled(false);
-            	configurationView.getKernelCacheFileChooseButton().setEnabled(false);
+            	configurationView.getSandboxProfilesFileChooseButton().setEnabled(true);
+            	configurationModel.setDataBundleFlag(false);
+            	isOneSrcFile = false;
             }
     	}
     }
@@ -183,14 +161,14 @@ public class ConfigurationController {
         if (PropertyChangeEventNames.PYTHON2_BIN_PATH_UPDATED.getEventName().equals(evt.getPropertyName())) {
         	configurationView.getPython2TextField().setText((String) evt.getNewValue());
         } else if (PropertyChangeEventNames.PYTHON3_BIN_PATH_UPDATED.getEventName().equals(evt.getPropertyName())) {
-        	Msg.info(null, "yes ");
         	configurationView.getPython3TextField().setText((String) evt.getNewValue());
-        } else if (PropertyChangeEventNames.KERNEL_EXT_FILE_PATH_UPDATED.getEventName().equals(evt.getPropertyName())) {
-        	configurationView.getKernelExtFilePathTextField().setText((String) evt.getNewValue());
-        } else if (PropertyChangeEventNames.SANDBOXD_FILE_PATH_UPDATED.getEventName().equals(evt.getPropertyName())) {
-        	configurationView.getSandboxdFilePathTextField().setText((String) evt.getNewValue());
-        } else if (PropertyChangeEventNames.KERNEL_CACHE_FILE_PATH_UPDATED.getEventName().equals(evt.getPropertyName())) {
-        	configurationView.getKernelCacheFilePathTextField().setText((String) evt.getNewValue());
+        } else if (PropertyChangeEventNames.SANDBOX_OPERATIONS_FILE_PATH_UPDATED.getEventName().equals(evt.getPropertyName())) {
+        	configurationView.getSandboxOperationsFilePathTextField().setText((String) evt.getNewValue());
+        	if (isOneSrcFile) {
+        		configurationModel.setSandboxProfilesFilePathString((String) evt.getNewValue());
+        	}
+        } else if (PropertyChangeEventNames.SANDBOX_PROFILES_FILE_PATH_UPDATED.getEventName().equals(evt.getPropertyName())) {
+        	configurationView.getSandboxProfilesFilePathTextField().setText((String) evt.getNewValue());
         } else if (PropertyChangeEventNames.OUT_DIR_PATH_UPDATED.getEventName().equals(evt.getPropertyName())) {
         	configurationView.getOutDirPathTextField().setText((String) evt.getNewValue());
         } else if (PropertyChangeEventNames.IOS_VERSION_VALUE_UPDATED.getEventName().equals(evt.getPropertyName())) {
@@ -202,90 +180,81 @@ public class ConfigurationController {
     }
     
     // buttons listeners
-    	// python buttons
     private String getPythonInstallPath(String pythonBinPath) {
-    	logUtil.logMessage("Extracting the absolute path of the '" + pythonBinPath + "' installation directory...");
-    	return Utilities.runCommand(logUtil, pythonBinPath, "-c", "import sys; print(sys.executable)");
+    	this.logMessage("Extracting the absolute path of the '" + pythonBinPath + "' installation directory...");
+        CommandRunnerTask cmdRunnerTask = new CommandRunnerTask(new String[] {pythonBinPath, "-c", "import sys; print(sys.executable)"}, this::logMessage);
+        return taskExecutor.executeTask(cmdRunnerTask);
     }
     
     private Boolean isValidPythonBinary(String pythonPath, String pythonName, Boolean showErrorPane) {
-    	logUtil.logMessage("Checking if file: '" + pythonPath + "' is a valid " + pythonName + "...");
-        String outputCommandString = Utilities.runCommand(logUtil, pythonPath, "--version");
-        if (outputCommandString != null && outputCommandString.startsWith(pythonName)) {
-        	logUtil.logMessage("The '" + pythonPath + "' is a valid " + pythonName);
+    	this.logMessage("");
+    	this.logMessage("Checking if file: '" + pythonPath + "' is a valid " + pythonName + "...");
+        CommandRunnerTask cmdRunnerTask = new CommandRunnerTask(new String[] {pythonPath, "--version"}, this::logMessage);
+        String commandOutputString = taskExecutor.executeTask(cmdRunnerTask);
+        if(commandOutputString != null) {
+        	this.logMessage("The '" + pythonPath + "' is a valid " + pythonName);
         	return true;
         }
         
         String msgString = "The selected file: '" + pythonPath + "' is not a valid " + pythonName + ".";
-        logUtil.logMessage(msgString);
+        this.logMessage(msgString);
         if (showErrorPane) {
-    		JOptionPane.showMessageDialog(null, msgString, "Perquesits Error", JOptionPane.ERROR_MESSAGE);
+        	configurationView.displayError("Perquesits Error", msgString);
         }
-        return false;
+        
+    	return false;
     }
-    
-    private Boolean isPythonPackageInstalled(String pythonPath, String pythonName, String packageName) {
-    	logUtil.logMessage("Checking if " + pythonName + " has the '" + packageName + "' package installed...");
-    	
-    	String[] command = {pythonPath, "-m", "pip", "list"};
-    	logUtil.logMessage("Running external command: [ " + String.join(" ", command)+  " ]");
-        ProcessBuilder processBuilder = new ProcessBuilder(command);
-        boolean packageIsInstalled = false;
-        try {
-            Process process = processBuilder.start();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String line;
-            while ((line = reader.readLine()) != null) {
-            	logUtil.logMessage("* " + line);
-                if (line.startsWith(packageName)) {
-                	packageIsInstalled = true;
-                	break;
-                }
-            }
-            int exitCode = process.waitFor();
-            logUtil.logMessage("* Exit code: " + exitCode);
 
-        } catch (IOException | InterruptedException e) {
-        	logUtil.logMessage("* Error: " + e.toString());
-        }
+    private Boolean isPythonPackageInstalled(String pythonPath, String pythonName, String packageName) {
+    	this.logMessage("");
+    	this.logMessage("Checking if " + pythonName + " has the '" + packageName + "' package installed...");
+    	Boolean packageIsInstalled = false;
+        CommandRunnerTask cmdRunnerTask = new CommandRunnerTask(new String[] {pythonPath, "-m", "pip", "show", packageName}, this::logMessage);
+        String commandOutputString = taskExecutor.executeTask(cmdRunnerTask); 
+
         
-        if (packageIsInstalled) {
-        	logUtil.logMessage(pythonName + " has the required '" + packageName + "' package installed.");
-        	return packageIsInstalled;
+        if (commandOutputString != null && commandOutputString.startsWith("Name: " + packageName)) {
+        	this.logMessage(pythonName + " has the required '" + packageName + "' package installed.");
+        	return true;
         }
-        
         
         String msgString = "The selected " + pythonName + " does not have required '" + packageName + "' package installed. Please, make sure to install them.";
-        logUtil.logMessage(msgString);
-        JOptionPane.showMessageDialog(null, msgString, "Python 3 Requiremenets Error", JOptionPane.ERROR_MESSAGE);
+        this.logMessage(msgString);
+        configurationView.displayError("Python 3 Requiremenets Error", msgString);
             
         // ask user to automatically install
-        int response = JOptionPane.showConfirmDialog(null, "Do you want to try to automatically install " + pythonName + " requirements?", "Confirm", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+        int response = JOptionPane.showConfirmDialog(configurationView.getConfigurationPanel(), "Do you want to try to automatically install " + pythonName + " requirements?", "Confirm", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
         if (response == JOptionPane.YES_OPTION) {
         	
         	// Try to install package
-        	logUtil.logMessage("Trying to install '" + packageName + "' package required by " + pythonName + "...");
-            String outputCommandString = Utilities.runCommand(logUtil, pythonPath, "-m", "pip", "install", packageName);
-            if (outputCommandString != null) {
+        	this.logMessage("");
+        	this.logMessage("Trying to install '" + packageName + "' package required by " + pythonName + "...");
+        	cmdRunnerTask = new CommandRunnerTask(new String[] {pythonPath, "-m", "pip", "install", packageName}, this::logMessage);
+            commandOutputString = taskExecutor.executeTask(cmdRunnerTask);
+        	
+            if (commandOutputString != null) {
             	packageIsInstalled = true;
             }else {
-            	JOptionPane.showMessageDialog(null, "Unable to install '" + packageName + "' package required by " + pythonName + ". Please, make sure them to install them and try again.", "Perquesits Error", JOptionPane.ERROR_MESSAGE);
+            	String errorMsgString = "Unable to install '" + packageName + "' package required by " + pythonName + ". Please, make sure them to install them and try again.";
+                this.logMessage(errorMsgString);
+            	configurationView.displayError("Perquesits Error", errorMsgString);
+            	packageIsInstalled = false;
             }
         }
         
 		return packageIsInstalled;
     }
-    
+        
     private void choosePython2ButtonAction(ActionEvent e) {
-    	JFileChooser fileChooser = new JFileChooser();
+    	GhidraFileChooser fileChooser = new GhidraFileChooser(null);
     	String currentPython2TextFieldValue = configurationModel.getPython2BinPathString();
     	if (!currentPython2TextFieldValue.equals("")) {
     		fileChooser.setCurrentDirectory(new File(currentPython2TextFieldValue));
     	}
     	
-        int returnValue = fileChooser.showOpenDialog(this.configurationView.getConfigurationPanel());
-        if (returnValue == JFileChooser.APPROVE_OPTION) {
-        	String pythonPathString = fileChooser.getSelectedFile().getAbsolutePath();
+        File selectedFile = fileChooser.getSelectedFile();
+        if (selectedFile != null) {
+        	String pythonPathString = selectedFile.getAbsolutePath();
             if (isValidPythonBinary(pythonPathString, "Python 2", true)) {
             	configurationModel.setPython2BinPathString(pythonPathString);
             }
@@ -293,15 +262,15 @@ public class ConfigurationController {
     }
     
     private void choosePython3ButtonAction(ActionEvent e) {
-    	JFileChooser fileChooser = new JFileChooser();
+    	GhidraFileChooser fileChooser = new GhidraFileChooser(null);
     	String currentPython3TextFieldValue = configurationModel.getPython3BinPathString();
     	if (!currentPython3TextFieldValue.equals("")) {
     		fileChooser.setCurrentDirectory(new File(currentPython3TextFieldValue));
     	}
     	
-        int returnValue = fileChooser.showOpenDialog(this.configurationView.getConfigurationPanel());
-        if (returnValue == JFileChooser.APPROVE_OPTION) {
-        	String pythonPathString = fileChooser.getSelectedFile().getAbsolutePath();
+        File selectedFile = fileChooser.getSelectedFile();
+        if (selectedFile != null) {
+        	String pythonPathString = selectedFile.getAbsolutePath();
             if (isValidPythonBinary(pythonPathString, "Python 3", true) && isPythonPackageInstalled(pythonPathString, "Python 3", "lief")) {
             	configurationModel.setPython3BinPathString(pythonPathString);
             }
@@ -309,32 +278,33 @@ public class ConfigurationController {
     }
     
     private void autoDetectPythonBinsButtonAction(ActionEvent e) {
-    	logUtil.logMessage("Trying to automatically detect required Python binaries...");
+    	this.logMessage("");
+    	this.logMessage("Trying to automatically detect required Python binaries...");
 
+    	
+    	// TO DO: change order
     	String python2Path = getPythonInstallPath("python2");
-    	if (python2Path == null) {
-        	logUtil.logMessage("Auto-detected Python 2 binary failed.");
-    	} else {
-            if (isValidPythonBinary(python2Path, "Python 2", false)) {
-            	configurationModel.setPython2BinPathString(python2Path);
-            }
+    	if (python2Path != null && isValidPythonBinary(python2Path, "Python 2", false)) {
+        	configurationModel.setPython2BinPathString(python2Path);
     	}
     	
     	String python3Path = getPythonInstallPath("python3");
-    	if (python3Path ==  null) {
-        	logUtil.logMessage("Auto-detected Python 2 binary failed.");
-    	} else {
-            if (isValidPythonBinary(python3Path, "Python 3", false) && isPythonPackageInstalled(python3Path, "Python 3", "lief")) {
-            	configurationModel.setPython3BinPathString(python3Path);
-            }
+    	if (python3Path !=  null && isValidPythonBinary(python3Path, "Python 3", false) && isPythonPackageInstalled(python3Path, "Python 3", "lief")) {
+        	configurationModel.setPython3BinPathString(python3Path);
     	}
     	
+    	String msgString = "";
     	if (python2Path == null && python3Path == null) {
-    		JOptionPane.showMessageDialog(null, "Auto-detecting Python binaries failed. Please, provide the required binaries manually.", "Perquesits Error", JOptionPane.ERROR_MESSAGE);
+    		msgString = "Auto-detecting Python binaries failed. Please, provide the required binaries manually.";
     	} else if (python2Path == null) {
-    		JOptionPane.showMessageDialog(null, "Auto-detecting Python 2 binary failed. Please, provide the required binary manually.", "Perquesits Error", JOptionPane.ERROR_MESSAGE);
+    		msgString = "Auto-detecting Python 2 binary failed. Please, provide the required binary manually.";
     	} else if (python3Path == null) {
-    		JOptionPane.showMessageDialog(null, "Auto-detecting Python 3 binary failed. Please, provide the required binary manually.", "Perquesits Error", JOptionPane.ERROR_MESSAGE);
+    		msgString = "Auto-detecting Python 3 binary failed. Please, provide the required binary manually.";
+    	}
+    	
+    	if (!msgString.equals("")) {
+    		this.logMessage(msgString);
+    		configurationView.displayError("Perquesits Error", msgString);
     	}
     }
     
@@ -345,9 +315,8 @@ public class ConfigurationController {
     }
     
     private void chooseFileButtonAction(ActionEvent e, String oldValueFilePath, StringSetter setter, Boolean isDir) {
-    	JFileChooser fileChooser = new JFileChooser();
+    	GhidraFileChooser fileChooser = new GhidraFileChooser(null);
 		String currentProgramPath = this.sandBlasterPlugin.getCurrentProgramPath();
-		logUtil.logMessage(currentProgramPath);
 		
     	if (!oldValueFilePath.equals("")) {
     		fileChooser.setCurrentDirectory(new File(oldValueFilePath));
@@ -356,16 +325,14 @@ public class ConfigurationController {
     		fileChooser.setCurrentDirectory(file);
 		}
     	
-		fileChooser.setAcceptAllFileFilterUsed(false);
     	if (isDir) {
-    		fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+    		fileChooser.setFileSelectionMode(GhidraFileChooserMode.DIRECTORIES_ONLY);
     	} else {
-    		fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+    		fileChooser.setFileSelectionMode(GhidraFileChooserMode.FILES_ONLY);
     	}
 		
-        int returnValue = fileChooser.showOpenDialog(null);
-        if (returnValue == JFileChooser.APPROVE_OPTION) {
-            File selectedFile = fileChooser.getSelectedFile();
+        File selectedFile = fileChooser.getSelectedFile();
+        if (selectedFile != null) {
             setter.set(selectedFile.getAbsolutePath());
         }
     }
@@ -383,6 +350,8 @@ public class ConfigurationController {
 		public void removeUpdate(DocumentEvent e) {
 			// TODO Auto-generated method stub
 			configurationModel.setiOSVersionString("");
+			configurationModel.setSandboxOperationsFilePathString("");
+			configurationModel.setSandboxProfilesFilePathString("");
 		}
 
 		@Override
@@ -394,19 +363,20 @@ public class ConfigurationController {
     private void okButtonAction(ActionEvent e) {
         String iOSVersionString = configurationView.getiOSVersionTextField().getText();
         
+    	this.logMessage("");
         if (iOSVersionString.equals("")) {
-        	logUtil.logMessage("iOS Version is not specified!");
+        	this.logMessage("iOS Version is not specified!");
             JOptionPane.showMessageDialog(configurationView.getConfigurationPanel(), "Please, specify a valid iOS version.");
             return;
         }
         
         if (!Utilities.isIOSVersionValid(iOSVersionString)) {
-        	logUtil.logMessage("Invalid iOS Version: " + iOSVersionString);
+        	this.logMessage("Invalid iOS Version: " + iOSVersionString);
             JOptionPane.showMessageDialog(configurationView.getConfigurationPanel(), "Please, specify a valid iOS version.");
             return;
         }
         
-        logUtil.logMessage("iOS Version: " + iOSVersionString);
+        this.logMessage("Specified iOS Version: " + iOSVersionString);
         configurationModel.setiOSVersionString(iOSVersionString);
     }
 
@@ -427,16 +397,12 @@ public class ConfigurationController {
 			configurationView.getiOSVersionOkButton().setEnabled(true);
 		}
 		
-		if (!configurationModel.getKernelExtFilePathString().equals("")) {
-			configurationView.getKernelExtFileChooseButton().setEnabled(true);
+		if (!configurationModel.getSandboxOperationsFilePathString().equals("")) {
+			configurationView.getSandboxOperationsFileChooseButton().setEnabled(true);
 		}
 		
-		if (!configurationModel.getSandboxdFilePathString().equals("")) {
-			configurationView.getSandboxdFileChooseButton().setEnabled(true);
-		}
-		
-		if (!configurationModel.getKernelCacheFilePathString().equals("")) {
-			configurationView.getKernelCacheFileChooseButton().setEnabled(true);
+		if (!configurationModel.getSandboxProfilesFilePathString().equals("")) {
+			configurationView.getSandboxProfilesFileChooseButton().setEnabled(true);
 		}
 		
 		configurationView.getStartButton().setEnabled(true);
@@ -450,9 +416,8 @@ public class ConfigurationController {
     	configurationView.getPython2BinChooseButton().setEnabled(false);
     	configurationView.getPython3BinChooseButton().setEnabled(false);
     	configurationView.getiOSVersionOkButton().setEnabled(false);
-    	configurationView.getKernelExtFileChooseButton().setEnabled(false);
-    	configurationView.getSandboxdFileChooseButton().setEnabled(false);
-    	configurationView.getKernelCacheFileChooseButton().setEnabled(false);
+    	configurationView.getSandboxOperationsFileChooseButton().setEnabled(false);
+    	configurationView.getSandboxProfilesFileChooseButton().setEnabled(false);
     	configurationView.getStartButton().setEnabled(false);
     	configurationView.getCancelButton().setEnabled(true);
     	configurationView.getOutDirPathChooseButton().setEnabled(false);
@@ -460,34 +425,56 @@ public class ConfigurationController {
     
     private void startButtonAction(ActionEvent e) {
     	
-    	SwingUtilities.invokeLater(() -> {
-    		prepareButtons();
-    		logUtil.logMessage("Process started.....");
-            configurationView.getProgressBar().setIndeterminate(true);  // Makes the progress bar indeterminate
-            configurationView.getProgressBar().setValue(100);
-    	});
-    	
-		sandBlasterBackgroundTask = new SandBlasterBackgroundTask(this);
-        sandBlasterBackgroundTask.execute();
+		try {
+			if (configurationModel.isDataBundle()) {
+				sandBlasterBackgroundTask = new ReverseBundleSandBoxProfilesTask(this);
+			} else {
+				sandBlasterBackgroundTask =  new ReverseMultipleSandBoxProfilesTask(this);
+			}
+			
+	    	SwingUtilities.invokeLater(() -> {
+	    		prepareButtons();
+	    		this.logMessage("Process started.....");
+	            configurationView.getProgressBar().setValue(100);
+	            configurationView.getProgressBar().setIndeterminate(true);  // Makes the progress bar indeterminate
+	    	});
+	    	
+	        sandBlasterBackgroundTask.execute(); 
+		} catch (IOException exception) {
+			configurationView.displayError("Error", exception.getMessage());
+			logMessage(exception.getCause().getMessage());
+		}
     }
     
     private void cancelButtonAction(ActionEvent e) {
+        // re-confirm
+        int response = JOptionPane.showConfirmDialog(configurationView.getConfigurationPanel(), "Are you sure you want to cancel the process?", "Confirm", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+        if (response == JOptionPane.YES_OPTION) {
+	    	cancelSandBlasterBackgroundTask();
+        }
+    }
+    
+    public void cancelSandBlasterBackgroundTask() {
     	if (sandBlasterBackgroundTask != null) {
     		sandBlasterBackgroundTask.cancel(true);
     	}
-    	configurationView.getProgressBar().setIndeterminate(false);
-    	configurationView.getProgressBar().setValue(0);
     }
     
-    public void taskDone(String resultDirPathString) {
-    	logMessage("Process completed!");
-    	
-        configurationView.getProgressBar().setIndeterminate(false);  // Makes the progress bar indeterminate
+    public void taskDone(String msgString, String resultDirPathString) {
     	restoreButtons();
-    	this.resultModel.loadTreeData(new File(resultDirPathString));
+    	resultModel.loadTreeData(new File(resultDirPathString));
+        configurationView.getProgressBar().setIndeterminate(false);  // Makes the progress bar indeterminate
+    	configurationView.displaySuccess("Success", msgString);
+    }
+    
+    public void taskFailed(String errorMsgString) {
+    	restoreButtons();
+    	configurationView.getProgressBar().setIndeterminate(false);
+    	configurationView.getProgressBar().setValue(0);
+    	configurationView.displayError("Error", errorMsgString);
     }
     
     public void logMessage(String msg) {
-    	this.logUtil.logMessage(msg);
+    	configurationModel.logMessage(msg);
     }
 }

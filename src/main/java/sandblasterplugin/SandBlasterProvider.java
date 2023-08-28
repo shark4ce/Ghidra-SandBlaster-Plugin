@@ -2,6 +2,8 @@ package sandblasterplugin;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.io.IOException;
+
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -22,19 +24,20 @@ public class SandBlasterProvider extends ComponentProvider {
 	
     private ConfigurationView configurationView;
     private ConfigurationModel configurationModel;
+    private ConfigurationController configurationController;
     
     private ResultView resultView;
     private ResultModel resultModel;
     
-	public SandBlasterProvider(SandBlasterPlugin sandBlasterPlugin) {
+	public SandBlasterProvider(SandBlasterPlugin sandBlasterPlugin) throws IOException {
 		super(sandBlasterPlugin.getTool(), sandBlasterPlugin.getName(), sandBlasterPlugin.getName());
 		this.resultModel = new ResultModel();
 		this.resultView = new ResultView();
 		new ResultController(resultModel, resultView);
 		
-		this.configurationModel = new ConfigurationModel(sandBlasterPlugin.getToolOptions());
 		this.configurationView = new ConfigurationView();
-		new ConfigurationController(configurationModel, configurationView, sandBlasterPlugin, resultModel);
+		this.configurationModel = new ConfigurationModel(configurationView.getLogTextArea(), sandBlasterPlugin);
+		this.configurationController = new ConfigurationController(configurationModel, configurationView, sandBlasterPlugin, resultModel);
 		
         // add to TabbedPane
 		tabbedPane = new JTabbedPane();
@@ -51,5 +54,8 @@ public class SandBlasterProvider extends ComponentProvider {
 	public JComponent getComponent() {
 		return mainPanel;
 	}
-
+    
+    public ConfigurationController getConfigurationController() {
+    	return configurationController;
+    }
 }

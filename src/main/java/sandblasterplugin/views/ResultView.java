@@ -1,16 +1,25 @@
 package sandblasterplugin.views;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Window;
+import java.awt.Dialog.ModalityType;
 import java.io.File;
+import java.net.URL;
 
 import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JEditorPane;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.JTextArea;
 import javax.swing.JTextPane;
 import javax.swing.JToolBar;
 import javax.swing.JTree;
@@ -19,6 +28,7 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeSelectionModel;
 
 import resources.Icons;
+import sandblasterplugin.utils.Utilities;
 
 
 public class ResultView {
@@ -28,7 +38,7 @@ public class ResultView {
 	private JTree directoryTree;
 	private JButton refreshButton;
 	private JButton openDirButton;
-	private JTextPane fileContentArea;
+	private JTextArea fileContentArea;
     private File currentDirectory;
     
     
@@ -45,7 +55,7 @@ public class ResultView {
     	treePanel.add(new JScrollPane(directoryTree), BorderLayout.CENTER);
     	
 		// prepare textview area
-		fileContentArea = new JTextPane();
+		fileContentArea = new JTextArea();
         fileContentArea.setEditable(false);
 		JScrollPane fileViewScrollPane = new JScrollPane(fileContentArea);
 		
@@ -63,7 +73,7 @@ public class ResultView {
         
         JToolBar toolBar = new JToolBar("My Toolbar");
         toolBar.setBorder(BorderFactory.createEtchedBorder());
-        toolBar.setFloatable(false);  // prevent users from dragging the toolbar away
+        toolBar.setFloatable(false);
         toolBar.addSeparator();
         toolBar.add(openDirButton);
         toolBar.add(refreshButton);
@@ -73,13 +83,13 @@ public class ResultView {
         resultPanel.add(toolBar, BorderLayout.PAGE_START);
         resultPanel.add(new JLabel("Results"));
         resultPanel.add(resultSplitPane, BorderLayout.CENTER);
-//        resultPanel.setVisible(false);
+        
 	}
-	
 	
     public void displayWarning(String message) {
         JOptionPane.showMessageDialog(resultPanel, message, "Warning", JOptionPane.WARNING_MESSAGE);
     }
+    
     
 	public JPanel getResultPanel() {
 		return resultPanel;
@@ -117,12 +127,8 @@ public class ResultView {
 		this.openDirButton = openDirButton;
 	}
 
-	public JTextPane getFileContentArea() {
+	public JTextArea getFileContentArea() {
 		return fileContentArea;
-	}
-
-	public void setFileContentArea(JTextPane fileContentArea) {
-		this.fileContentArea = fileContentArea;
 	}
 
 	public File getCurrentDirectory() {

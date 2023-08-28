@@ -6,25 +6,29 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 
-import javax.swing.JFileChooser;
 import javax.swing.JTree;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
 
+import docking.widgets.filechooser.GhidraFileChooser;
+import docking.widgets.filechooser.GhidraFileChooserMode;
+import sandblasterplugin.backgroundtasks.general.FileReaderTask;
+import sandblasterplugin.backgroundtasks.general.TaskExecutor;
 import sandblasterplugin.enums.PropertyChangeEventNames;
 import sandblasterplugin.models.ResultModel;
-import sandblasterplugin.utils.Utilities;
 import sandblasterplugin.views.ResultView;
 
 public class ResultController implements PropertyChangeListener{
     private ResultModel resultModel;
     private ResultView resultView;
-
+    private TaskExecutor taskExecutor;
+    
     public ResultController(ResultModel resultModel, ResultView resultView) {
         this.resultModel = resultModel;
         this.resultView = resultView;
+        this.taskExecutor = new TaskExecutor();
         initListeners();
     }
 
@@ -39,10 +43,8 @@ public class ResultController implements PropertyChangeListener{
     }
     
     private void openButtonAction(ActionEvent e) {
-    	JFileChooser fileChooser = new JFileChooser();
-		fileChooser.setDialogTitle("Choose Directory");
-		fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-		fileChooser.setAcceptAllFileFilterUsed(false);
+    	GhidraFileChooser fileChooser = new GhidraFileChooser(null);
+		fileChooser.setFileSelectionMode(GhidraFileChooserMode.DIRECTORIES_ONLY);
 
         DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode) resultView.getDirectoryTree().getModel().getRoot();
         if (rootNode != null && rootNode.getUserObject() instanceof File) {
@@ -52,10 +54,9 @@ public class ResultController implements PropertyChangeListener{
 			}
         }
 	    
-        int returnValue = fileChooser.showOpenDialog(null);
-        if (returnValue == JFileChooser.APPROVE_OPTION) {
-            File selectedFile = fileChooser.getSelectedFile();
-            resultModel.loadTreeData(selectedFile);
+        File selectedFile = fileChooser.getSelectedFile();
+        if (selectedFile != null) {
+        	resultModel.loadTreeData(selectedFile);
         }
     }
     
@@ -85,15 +86,15 @@ public class ResultController implements PropertyChangeListener{
                 }
                 
                 if (file.isDirectory()) {
-                    setIcon(getClosedIcon()); // Use the directory (closed) icon irrespective of the fact if directory is empty or not
+                    setIcon(getClosedIcon());
                 } else {
                     setIcon(getLeafIcon());
                 }
             }
             return this;
         }
-    }
-    
+    }	
+
 	private void previewFilesAction(TreeSelectionEvent e) {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode) resultView.getDirectoryTree().getLastSelectedPathComponent();
 
@@ -102,18 +103,20 @@ public class ResultController implements PropertyChangeListener{
         
         File nodeFile = (File) node.getUserObject();
 	    if (!nodeFile.exists()) {
-        	resultView.displayWarning("Warning: The selected file/directory was deleted. Please, refresh.");
+        	resultView.displayWarning("The selected file/directory was deleted. Please, refresh.");
         	return;
 	    }
+	   
 	    
 	    if (!nodeFile.isDirectory()) {
-	    	String content = Utilities.readTextFile(nodeFile);
-	        if (content == null) {
-	        	resultModel.setFileContentString("");
+        	resultModel.setFileContentString("");
+		    String fileContentString =  taskExecutor.executeTask(new FileReaderTask(nodeFile, null));
+		    
+	        if (fileContentString != null) {
+	        	resultModel.setFileContentString(fileContentString);
+	        } else {
 	        	resultView.displayWarning("Warning: The selected file is not a text file.");
-	            return;
 	        }
-	    	resultModel.setFileContentString(content);
 	    }
     }
 	
