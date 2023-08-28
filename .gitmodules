@@ -1,0 +1,3 @@
+[submodule "os/sandblaster"]
+	path = os/sandblaster
+	url = git@github.com:malus-security/sandblaster.git

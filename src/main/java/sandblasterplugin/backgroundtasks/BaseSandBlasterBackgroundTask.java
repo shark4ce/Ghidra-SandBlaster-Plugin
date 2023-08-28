@@ -81,7 +81,12 @@ public abstract class BaseSandBlasterBackgroundTask extends SwingWorker<Void, St
 	    // Get the directory where Ghidra is installed
 	    String pluginInstallDir = Application.getMyModuleRootDirectory().getAbsolutePath();
 	    String platformDir = Platform.CURRENT_PLATFORM.getDirectoryName();
-		String sandblasterToolPatString = String.join(File.separator, pluginInstallDir, "os", platformDir, "sandblaster");
+	    String sandblasterToolPatString;
+	    if (!platformDir.startsWith("win")) {
+	    	sandblasterToolPatString = String.join(File.separator, pluginInstallDir, "os", "sandblaster");
+	    } else {
+			sandblasterToolPatString = String.join(File.separator, pluginInstallDir, "os", platformDir, "sandblaster");
+	    }
 		
 		extractSandBoxDataPythonScriptPathString = String.join(File.separator, sandblasterToolPatString, "helpers", "extract_sandbox_data.py");
 		reverseSandBoxProfilesPythonScriptsDirPathString = String.join(File.separator, sandblasterToolPatString, "reverse-sandbox");
