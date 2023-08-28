@@ -9,15 +9,47 @@
     <META name="GENERATOR" content="Microsoft FrontPage 4.0">
     <META name="ProgId" content="FrontPage.Editor.Document">
 
-    <TITLE>Skeleton Help File for a Module</TITLE>
+    <TITLE>SandBlasterPlugin Help File</TITLE>
     <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
   </HEAD>
-
-  <BODY>
-    <H1><a name="HelpAnchor"></a>Skeleton Help File for a Module</H1>
-
-    <P>This is a simple skeleton help topic. For a better description of what should and should not
-    go in here, see the "sample" Ghidra extension in the Extensions/Ghidra directory, or see your 
-    favorite help topic. In general, language modules do not have their own help topics.</P>
-  </BODY>
+	<body>
+	    <h1>SandBlaster Plugin</h1>
+	    <p>This plugin is based on the SandBlaster tool and requires the SandBlaster tool along with Python2 and Python3 installed with the pip and lief packages.</p>
+	
+	    <h2>Prerequisites</h2>
+	    <ul>
+	        <li>SandBlaster tool</li>
+	        <li>Python2</li>
+	        <li>Python3</li>
+	        <ul>
+	            <li><i>pip</i> package</li>
+	            <li><i>lief</i> package</li>
+	        </ul>
+	    </ul>
+	    <p>It is required to specify the paths to the Python2 and Python3 binaries that contain all required packages.</p>
+	
+	    <h2>iOS Version Specific Files</h2>
+	    <p>Depending on the iOS version, the sandbox operations file source and sandbox profiles file source must be specified as follows:</p>
+	
+	    <strong>iOS Version: 4.x, 9.x - 11.x</strong>
+	    <ul>
+	        <li>SandBox Operations File Source: <i>kernel sandbox extension</i></li>
+	        <li>SandBox Profiles File Source: <i>kernel sandbox extension</i> (as a bundle)</li>
+	    </ul>
+	
+	    <strong>iOS Version: 5.x - 8.x</strong>
+	    <ul>
+	        <li>SandBox Operations File Source: <i>kernel sandbox extension</i></li>
+	        <li>SandBox Profiles File Source: <i>sandboxd</i></li>
+	    </ul>
+	
+	    <strong>iOS Version: > 12.x</strong>
+	    <ul>
+	        <li>SandBox Operations File Source: <i>kernel cache</i></li>
+	        <li>SandBox Profiles File Source: <i>kernel cache</i> (as a bundle)</li>
+	    </ul>
+	
+	    <h2>Logging</h2>
+	    <p>There will be a log file for each process of reversing and a log file for each project where SandBlasterPlugin was used, even multiple times.</p>
+	</body>
 </HTML>
