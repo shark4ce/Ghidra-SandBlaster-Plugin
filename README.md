@@ -24,7 +24,7 @@ This project includes the [SandBlaster](https://github.com/malus-security/sandbl
 
 1. Download the `.zip` file from [releases](https://github.com/shark4ce/Ghidra-SandBlaster-Plugin/releases/) section of this repository and install it in Ghidra in Ghidra in `File → Install Extensions...`
 
-    OR
+    `OR`
    
 1. Clone this repository:
 
