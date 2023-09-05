@@ -22,7 +22,9 @@ This project includes the [SandBlaster](https://github.com/malus-security/sandbl
 
 ## Installation
 
-1. Download Release version of extension and install it in Ghidra in Ghidra in `File → Install Extensions...` `OR`
+1. Download Release version of extension and install it in Ghidra in Ghidra in `File → Install Extensions...`
+
+       `OR`
 
 1. Clone this repository:
 
